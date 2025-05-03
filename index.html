@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BH GCSE Hebrew Revision</title>
+    <style>
+        /* Basic CSS Reset/Body Styles */
+        html {
+            scroll-behavior: smooth; /* Smooth scrolling for anchor links */
+        }
+
+        body {
+            font-family: 'Arial', sans-serif;
+            margin: 0;
+            padding: 0;
+            line-height: 1.6;
+            background-color: #f4f4f4; /* Light grey background */
+            color: #333; /* Dark grey text */
+        }
+
+        /* Header Styling */
+        header {
+            background-color: #0056b3; /* Darker blue */
+            color: white;
+            padding: 1rem 0;
+            text-align: center;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        header h1 {
+            margin: 0;
+            font-size: 2em;
+        }
+
+        /* Layout Styling */
+        main {
+            max-width: 900px;
+            margin: 20px auto; /* Center main content with some space top/bottom */
+            padding: 0 20px; /* Add padding on the sides for smaller screens */
+        }
+
+        section {
+            background-color: #fff; /* White background for sections */
+            padding: 40px;
+            margin-bottom: 40px; /* Space between sections */
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+        }
+
+        section h2 {
+            color: #0056b3; /* Match header color */
+            margin-top: 0;
+            border-bottom: 2px solid #007bff; /* Accent line */
+            padding-bottom: 10px;
+            margin-bottom: 20px;
+        }
+
+        /* Homepage/Introduction Styling */
+        .homepage-section {
+            text-align: center;
+        }
+
+        .homepage-section h2 {
+             border-bottom: none; /* No accent line for welcome heading */
+             padding-bottom: 0;
+             margin-bottom: 10px;
+        }
+
+        .homepage-section p {
+            font-size: 1.1em;
+            margin-bottom: 30px;
+            color: #555;
+        }
+
+
+        /* Options Container Styling */
+        .options-container {
+            display: flex;
+            justify-content: center; /* Center links horizontally */
+            gap: 20px; /* Space between link buttons */
+            margin-top: 30px;
+            flex-wrap: wrap; /* Allow items to wrap on smaller screens */
+        }
+
+        /* Option Links Styling */
+        .options-container a {
+            text-decoration: none;
+            color: white;
+            background-color: #007bff; /* Blue background for buttons */
+            padding: 12px 25px;
+            border-radius: 5px;
+            font-size: 1.1em;
+            transition: background-color 0.3s ease; /* Smooth hover effect */
+            display: inline-block; /* Treat as block for padding/margin, but allow side-by-side */
+        }
+
+        .options-container a:hover {
+            background-color: #004085; /* Darker blue on hover */
+        }
+
+        /* Revision Section Styling (unique) */
+        #roots-section {
+            background-color: #e9ecef; /* Slightly different background */
+        }
+
+        #binyanim-section {
+             background-color: #dee2e6; /* Another slight variation */
+        }
+
+        #unseen-section {
+             background-color: #ced4da; /* And another */
+        }
+
+        /* Footer Styling */
+        footer {
+            background-color: #343a40; /* Dark grey */
+            color: white;
+            text-align: center;
+            padding: 1rem 0;
+            margin-top: 40px;
+        }
+
+        /* Responsiveness CSS */
+        @media (max-width: 768px) {
+            header h1 {
+                font-size: 1.6em;
+            }
+
+            main {
+                padding: 0 15px;
+            }
+
+            section {
+                padding: 25px;
+                margin-bottom: 25px;
+            }
+
+            .options-container {
+                flex-direction: column; /* Stack links vertically */
+                align-items: center; /* Center links in the column */
+                gap: 15px; /* Reduce gap */
+            }
+
+            .options-container a {
+                width: 80%; /* Make buttons wider */
+                text-align: center;
+            }
+        }
+
+        /* Refinement CSS */
+        /* Adding some padding to the body top/bottom to prevent header/footer touching edge */
+        body {
+            padding-top: 1px; /* Small padding to ensure smooth scroll works from top */
+            padding-bottom: 1px; /* Small padding at bottom */
+        }
+
+        /* Optional: Add some visual separation for content within sections */
+        section p {
+            margin-bottom: 15px;
+        }
+         section ul {
+            padding-left: 20px;
+         }
+         section li {
+            margin-bottom: 8px;
+         }
+
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>GCSE Hebrew Revision Hub</h1>
+    </header>
+
+    <main>
+        <section class="homepage-section">
+            <h2>Welcome!</h2>
+            <p>This hub is designed to help you prepare for your GCSE Hebrew exams by focusing on key areas: common roots, verb conjugations (Binyanim), and unseen translation practice.</p>
+            <p>Navigate through the sections below to find resources and practice materials for each topic.</p>
+            <p>(This is all ~100% AI generated)</p>
+
+            <div class="options-container">
+                <a href="/600 roots/">600 Most Common Roots Revision</a>
+                <a href="/binyanim/">Binyanim Quiz Practice</a>
+                <a href="/unseen translation/">Unseen Translation Practice</a>
+            </div>
+        </section>
+
+        <section id="roots-section">
+            <h2>600 Most Common Roots</h2>
+            <p>Mastering common Hebrew roots is fundamental to understanding vocabulary and grammar. This section provides access to lists and exercises focusing on the 600 most frequently encountered roots.</p>
+            <p>Focus on recognizing the core meaning of the three (or sometimes four) letters and how they form the basis of related words.</p>
+            <p><em>Example Roots:</em></p>
+            <ul>
+                <li><strong>כת"ב (k-t-b)</strong> - related to writing (e.g., כתב - wrote, ספר - book, מכתב - letter)</li>
+                <li><strong>שמ"ר (sh-m-r)</strong> - related to guarding or keeping (e.g., שמר - guarded, שומר - guard/keeper)</li>
+                <li><strong>דב"ר (d-b-r)</strong> - related to speaking (e.g., דבר - spoke, מדבר - speaks)</li>
+            </ul>
+            <p>Future updates will include interactive quizzes and flashcards for effective memorization.</p>
+        </section>
+
+        <section id="binyanim-section">
+            <h2>Binyanim Quiz Practice</h2>
+            <p>Hebrew verbs are organized into seven main patterns called Binyanim (binyanim). Understanding these patterns is crucial for conjugating verbs correctly and inferring meaning.</p>
+            <p>This section offers quizzes and conjugation tables to help you practice identifying and conjugating verbs in different Binyanim.</p>
+            <p><em>The Seven Binyanim:</em></p>
+            <ul>
+                <li>Pa'al (פָּעַל) - Basic active (e.g., כתב - he wrote)</li>
+                <li>Nif'al (נִפְעַל) - Passive or reflexive of Pa'al (e.g., נכתב - it was written)</li>
+                <li>Pi'el (פִּיעֵל) - Intensive or causative active (e.g., סיפר - he told/narrated)</li>
+                <li>Pu'al (פֻּעַל) - Passive of Pi'el (e.g., סופר - it was told)</li>
+                <li>Hif'il (הִפְעִיל) - Causative active (e.g., הכתיב - he dictated)</li>
+                <li>Huf'al (הֻפְעַל) - Passive of Hif'il (e.g., הוכתב - it was dictated)</li>
+                <li>Hitpa'el (הִתְפַּעֵל) - Reflexive or reciprocal (e.g., התכתב - he corresponded)</li>
+            </ul>
+            <p>Quizzes will test your ability to identify the Binyan of a given verb and conjugate common verbs in different tenses.</p>
+        </section>
+
+        <section id="unseen-section">
+            <h2>Unseen Translation Practice</h2>
+            <p>The unseen translation section of the exam tests your ability to read and comprehend unfamiliar Hebrew text and translate it accurately into English.</p>
+            <p>This area provides sample unseen passages covering various topics, similar to those found in the exam. Each passage includes vocabulary support and translation tips.</p>
+            <p><em>Tips for Unseen Translation:</em></p>
+            <ul>
+                <li>Read the text through once to get the general gist.</li>
+                <li>Identify the roots of unfamiliar words.</li>
+                <li>Look for verb Binyanim to understand actions.</li>
+                <li>Pay attention to prepositions and conjunctions.</li>
+                <li>Translate sentence by sentence, aiming for natural English.</li>
+            </ul>
+            <p>Regular practice with different types of texts will significantly improve your confidence and speed.</p>
+        </section>
+    </main>
+
+    <footer>
+        <p>&copy; 2023 BH Revision. All rights reserved.</p>
+    </footer>
+
+</body>
+</html>

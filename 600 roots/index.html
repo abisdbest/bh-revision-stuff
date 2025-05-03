@@ -1,0 +1,2819 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hebrew Vocab Quiz</title>
+    <style>
+        /* ... (Your CSS remains the same) ... */
+        body {
+            font-family: 'Arial', sans-serif;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            background-color: #f4f4f4;
+            color: #333;
+            overflow: hidden; /* Prevent body scrolling */
+            position: relative; /* Needed for absolute positioning of buttons */
+        }
+
+        #sidebar {
+            width: 250px;
+            background-color: #2c3e50;
+            color: #ecf0f1;
+            padding: 20px;
+            box-sizing: border-box;
+            overflow-y: auto; /* Allow sidebar to scroll if content overflows */
+            height: 100vh; /* Full viewport height */
+        }
+
+        #sidebar h2 {
+            text-align: center;
+            margin-bottom: 10px; /* Reduced margin */
+            color: #ecf0f1;
+        }
+
+        #sort-options {
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        #sort-options label {
+            margin-right: 5px;
+        }
+
+        #sort-options select {
+            padding: 5px;
+            border-radius: 5px;
+            border: none;
+            background-color: #34495e;
+            color: #ecf0f1;
+            cursor: pointer;
+        }
+
+        #word-ratings {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        #word-ratings li {
+            margin-bottom: 8px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        #word-ratings li .word {
+            flex-grow: 1;
+            margin-right: 10px;
+            white-space: nowrap; /* Prevent word wrapping */
+            overflow: hidden;
+            text-overflow: ellipsis; /* Add ellipsis for long words */
+        }
+
+        .rating-bar-container {
+            width: 80px;
+            background-color: #34495e;
+            border-radius: 5px;
+            overflow: hidden;
+        }
+
+        .rating-bar {
+            height: 10px;
+            /* Background color will be set by JS based on rating */
+            width: 0%; /* Initial width */
+            transition: width 0.3s ease, background-color 0.3s ease; /* Add background-color to transition */
+        }
+
+        #main-content {
+            flex-grow: 1;
+            padding: 40px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh; /* Full viewport height */
+            box-sizing: border-box;
+            overflow-y: auto; /* Allow main content to scroll if needed */
+            position: relative; /* Needed for absolute positioning of timer */
+        }
+
+        #timer-container {
+            width: 80%;
+            max-width: 700px;
+            height: 15px;
+            background-color: #ccc;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            overflow: hidden;
+        }
+
+        #timer-bar {
+            height: 100%;
+            width: 100%; /* Starts full */
+            background-color: #2ecc71; /* Green */
+            /* Removed width transition here */
+             transition: background-color 0.3s ease; /* Only transition color */
+        }
+
+
+        #question-area {
+            background-color: #fff;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            text-align: center;
+            margin-bottom: 30px;
+            width: 80%;
+            max-width: 700px;
+        }
+
+        #question-word {
+            font-size: 3em;
+            font-weight: bold;
+            margin-bottom: 20px;
+            color: #e74c3c;
+        }
+
+        #answer-options {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 20px;
+            width: 100%;
+        }
+
+        .answer-button {
+            background-color: #3498db;
+            color: white;
+            border: none;
+            padding: 15px;
+            border-radius: 8px;
+            font-size: 1.2em;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+            text-align: left;
+        }
+
+        .answer-button:hover {
+            background-color: #2980b9;
+        }
+
+        .answer-button.correct {
+            background-color: #2ecc71;
+        }
+
+        .answer-button.incorrect {
+            background-color: #e74c3c;
+        }
+
+        #score-area {
+            text-align: center;
+            margin-top: 20px;
+            font-size: 1.1em;
+        }
+
+        #next-button {
+            background-color: #f39c12;
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 8px;
+            font-size: 1.2em;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+            margin-top: 20px;
+            display: none; /* Hide until answer is given */
+        }
+
+        #next-button:hover {
+            background-color: #e67e22;
+        }
+
+        #control-buttons {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            display: flex;
+            flex-direction: column; /* Stack elements vertically */
+            align-items: flex-end; /* Align to the right */
+            gap: 5px; /* Smaller gap between stacked items */
+            z-index: 100; /* Ensure buttons are above other content */
+        }
+
+         #control-buttons .button-row {
+             display: flex;
+             gap: 10px; /* Gap between buttons in the row */
+         }
+
+         #control-buttons .setting {
+             display: flex;
+             align-items: center;
+             gap: 5px; /* Gap between checkbox and label */
+             color: #333; /* Text color for the setting */
+             font-size: 0.9em;
+         }
+
+         #control-buttons .setting label {
+             margin-right: 0; /* Override default label margin */
+         }
+
+         #control-buttons .setting input[type="checkbox"] {
+             cursor: pointer;
+         }
+
+
+        #control-buttons button {
+            padding: 8px 15px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 0.9em;
+            transition: background-color 0.2s ease;
+        }
+
+        #copy-save-button {
+            background-color: #3498db;
+            color: white;
+        }
+        #copy-save-button:hover {
+             background-color: #2980b9;
+        }
+
+        #load-save-button {
+            background-color: #9b59b6;
+            color: white;
+        }
+        #load-save-button:hover {
+            background-color: #8e44ad;
+        }
+                /* --- Styles for Hover Translation --- */
+
+        #word-ratings li {
+            /* Ensure flex properties are set for alignment */
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+            /* Add position relative if you prefer absolute positioning for the tooltip later */
+            /* position: relative; */
+        }
+
+        #word-ratings li .word-translation-container {
+            /* This container holds the word and tooltip */
+            display: flex; /* Arrange word and tooltip side-by-side */
+            align-items: center; /* Vertically align them */
+            flex-grow: 1; /* Allow it to take up space */
+            flex-shrink: 1; /* Allow it to shrink if needed */
+            overflow: hidden; /* Hide overflow if combined content is too long */
+            margin-right: 10px; /* Space before the rating bar */
+        }
+
+        #word-ratings li .word {
+            /* Keep original word styles */
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            /* Make sure it doesn't grow excessively, allowing tooltip space */
+            flex-shrink: 1; /* Allow word itself to shrink */
+             /* Optionally set a max-width if needed */
+             /* max-width: 100px; */
+        }
+
+        #word-ratings li .translation-tooltip {
+            display: none; /* HIDDEN BY DEFAULT */
+            margin-left: 8px; /* Space between word and tooltip */
+            font-size: 0.85em; /* Slightly smaller */
+            color: #bdc3c7; /* Lighter color */
+            background-color: #34495e; /* Darker background for contrast */
+            padding: 1px 5px;
+            border-radius: 3px;
+            white-space: nowrap; /* Prevent translation wrapping */
+            flex-shrink: 0; /* Prevent tooltip from shrinking */
+            font-style: italic; /* Optional styling */
+        }
+
+        /* SHOW tooltip when hovering over the LIST ITEM (li) */
+        #word-ratings li:hover .translation-tooltip {
+            display: inline; /* Show the tooltip */
+        }
+
+        /* Ensure rating bar container doesn't shrink */
+        #word-ratings li .rating-bar-container {
+             flex-shrink: 0;
+        }
+
+        /* --- End Hover Translation Styles --- */
+
+
+        @media (max-width: 768px) {
+            body {
+                flex-direction: column;
+            }
+
+            #sidebar {
+                width: 100%;
+                height: auto;
+                padding: 10px;
+                overflow-y: visible;
+            }
+
+            #word-ratings {
+                display: flex;
+                flex-wrap: wrap;
+                justify-content: center;
+                gap: 10px;
+            }
+
+            #word-ratings li {
+                flex-direction: column;
+                align-items: flex-start;
+                margin-bottom: 10px;
+                padding: 8px;
+                background-color: #34495e;
+                border-radius: 5px;
+                width: 120px; /* Adjust width for smaller screens */
+            }
+
+            #word-ratings li .word {
+                 margin-right: 0;
+                 margin-bottom: 5px;
+                 text-align: center;
+                 width: 100%; /* Full width in mobile view */
+            }
+
+            .rating-bar-container {
+                width: 100%;
+            }
+
+            .rating-bar {
+                height: 10px;
+            }
+
+             #timer-container,
+            #question-area {
+                 width: 100%;
+            }
+
+
+            #main-content {
+                padding: 20px;
+                height: auto;
+                min-height: calc(100vh - 120px); /* Adjust for sidebar height */
+            }
+
+            #question-area {
+                padding: 20px;
+            }
+
+            #question-word {
+                font-size: 2em;
+            }
+
+            #answer-options {
+                grid-template-columns: 1fr;
+            }
+
+            #control-buttons {
+                 position: static; /* Remove absolute positioning in mobile */
+                 margin-bottom: 10px; /* Add some space below buttons */
+                 flex-direction: row; /* Buttons side-by-side in mobile row */
+                 align-items: center; /* Center buttons in the row */
+                 justify-content: center; /* Center the row itself */
+                 flex-wrap: wrap; /* Allow wrapping if needed */
+            }
+             #control-buttons .button-row {
+                 gap: 10px;
+             }
+             #control-buttons .setting {
+                 width: 100%; /* Allow setting to take full width if wrapped */
+                 justify-content: center; /* Center checkbox and label */
+             }
+        }
+    </style>
+</head>
+<body>
+    <div id="control-buttons">
+        <div class="setting">
+            <label for="include-easy-words">Include Easy Words:</label>
+            <input type="checkbox" id="include-easy-words">
+        </div>
+        <div class="button-row">
+            <button id="copy-save-button">Copy Save Data</button>
+            <button id="load-save-button">Load Save Data</button>
+        </div>
+    </div>
+
+    <div id="sidebar">
+        <h2>Word Ratings</h2>
+        <div id="sort-options">
+            <label for="sort-by">Sort by:</label>
+            <select id="sort-by">
+                <option value="alphabetical">Alphabetical</option>
+                <option value="rating-asc">Worst to Best</option>
+                <option value="rating-desc">Best to Worst</option>
+            </select>
+        </div>
+        <ul id="word-ratings">
+            <!-- Word ratings will be added here by JavaScript -->
+        </ul>
+    </div>
+
+    <div id="main-content">
+         <div id="timer-container">
+            <div id="timer-bar"></div>
+        </div>
+        <div id="question-area">
+            <div id="question-word"></div>
+            <div id="answer-options">
+                <!-- Answer buttons will be added here by JavaScript -->
+            </div>
+        </div>
+        <button id="next-button">Next Question (Enter)</button>
+        <div id="score-area">Score: <span id="score">0</span></div>
+    </div>
+
+        <script>
+        // Your large object of words and translations will go here
+        const vocab = {
+    "אָב": { translation: "father", easy: true },
+    "אבד√": {
+        translation: "destroy; lose",
+        easy: false,
+        words: ["אֲבַדּוֹן - Destruction", "אֹבֵד - perishing"], // Destruction, perishing
+        confusables: ["עבד√", "אבה√", "דבב√", "אזן√", "אחז√", "אמר√", "עזב√", "אבך√"]
+    },
+    "אבה√": {
+        translation: "accept, be willing",
+        easy: false,
+        words: ["אֶבְיוֹן - Poor/needy (possible relation)", "אֲבוֹי - Woe! (possible relation)"], // Poor/needy (possible relation), Woe! (possible relation)
+        confusables: ["אהב√", "אבד√", "גבה√", "יבא√", "בוא√", "חוה√", "עבה√", "אפה√"]
+    },
+    "אֶבְיוֹן": { translation: "poor, oppressed", easy: false },
+    "אֶבֶן": { translation: "stone", easy: true },
+    "אָדוֹן": { translation: "lord, master", easy: true },
+    "אֲ-דֹנָי": { translation: "G-d", easy: true }, // Very common term
+    "אָדָם": { translation: "man, people", easy: true },
+    "אֲדָמָה": { translation: "earth, land", easy: true },
+    "אהב√": {
+        translation: "love, like",
+        easy: true,
+        words: ["אַהֲבָה - Love (n.)", "אוֹהֵב - lover/friend (participle)"], // Love (n.), lover/friend (participle)
+        confusables: ["אבה√", "אחב√", "הבל√", "כאב√", "להב√", "רהב√", "עזב√", "זהב√"]
+    },
+    "אֹהֶל": { translation: "tent", easy: true },
+    "אוֹ": { translation: "or", easy: true },
+    "אוּלַי": { translation: "perhaps", easy: false },
+    "אָוֶן": { translation: "wickedness, sin", easy: false },
+    "אוֹצָר": { translation: "supply, store-house, treasure", easy: false },
+    "אוֹר": { translation: "light", easy: true },
+    "אוֹת": { translation: "sign", easy: true },
+    "אָז": { translation: "then", easy: true },
+    "אֹזֶן": { translation: "ear", easy: true },
+    "אָח": { translation: "brother", easy: true },
+    "אָחוֹת": { translation: "sister", easy: true },
+    "אחז√": {
+        translation: "seize, hold",
+        easy: false,
+        words: ["אֲחֻזָה - Possession, property"], // Possession, property
+        confusables: ["חזה√", "אחר√", "יחז√", "אבד√", "לחץ√", "חוץ√", "ארז√", "עזז√"]
+    },
+    "אֲחֻזָה": { translation: "inherited property, possession", easy: false },
+    "אחר√": {
+        translation: "delay",
+        easy: false,
+        words: ["אַחַר - After", "אַחֵר - another", "אַחֲרוֹן - last", "אַחֲרִית - end"], // After, another, last, end
+        confusables: ["אחז√", "חור√", "אור√", "עכר√", "חרה√", "כרת√", "סחר√", "נכר√"]
+    },
+    "אַחַר": { translation: "behind, after", easy: true },
+    "אַחֵר": { translation: "another", easy: true },
+    "אַחֲרוֹן": { translation: "behind; last", easy: false },
+    "אַחֲרִית": { translation: "end, outcome", easy: false },
+    "אֹיֵב, אוֹיֵב": { translation: "enemy", easy: true },
+    "אַיֵּה": { translation: "where?", easy: false },
+    "אֵיךְ": { translation: "how", easy: true },
+    "אַיִל": { translation: "ram", easy: false },
+    "אַיִן, אֵין": { translation: "there is/are not", easy: true },
+    "אִישׁ, אֲנָשִׁים": { translation: "(s,pl) man, husband", easy: true },
+    "אַךְ": { translation: "only; surely", easy: true },
+    "אכל√": {
+        translation: "eat, consume",
+        easy: true,
+        words: ["אֹכֶל - Food", "מַאֲכָל - food", "אׇכְלָה - food/consumption"], // Food, food, food/consumption
+        confusables: ["אבל√", "אחל√", "נכל√", "שׂכל√", "יכל√", "כול√", "כלה√", "אבק√"]
+    },
+    "אֶל": { translation: "to, towards", easy: true },
+    "אַל": { translation: "no, not", easy: true },
+    "אֵ-ל": { translation: "G-d", easy: true },
+    "אֵלֶּה": { translation: "these", easy: true },
+    "אֱ-לֹהִים": { translation: "G-d", easy: true }, // Very common term
+    "אַלְמָנָה": { translation: "widow", easy: false },
+    "אֶלֶף": { translation: "thousand; tribe, clan", easy: true },
+    "אַלוּף": { translation: "tribal chief; friend; ox", easy: false },
+    "אִם": { translation: "if, then; not (in an oath)", easy: true },
+    "אֵם": { translation: "mother", easy: true },
+    "אַמָּה": { translation: "forearm; cubit", easy: false },
+    "אָמָה": { translation: "female slave, maidservant", easy: false },
+    "אמן√": {
+        translation: "be steady, firm, trustworthy, faithful; believe",
+        easy: true,
+        words: ["אָמֵן - Amen", "אֱמוּנָה - faithfulness", "אֹמֶן - faithfulness", "אֻמְנָם - truly"], // Amen, faithfulness, faithfulness, truly
+        confusables: ["אמר√", "ימן√", "מנה√", "אדם√", "עמן√", "און√", "אפן√", "אמת√"]
+    },
+    "ֱמוּנָה": { translation: "steadiness, loyalty", easy: false }, // Corrected vowel
+    "אמר√": {
+        translation: "say",
+        easy: true,
+        words: ["אֹמֶר - Word", "אִמְרָה - utterance", "מַאֲמָר - word/command"], // Word, utterance, word/command
+        confusables: ["אמן√", "עמר√", "מרר√", "אור√", "סמר√", "זמר√", "שמר√", "כרם√"]
+    },
+    "ֱמֶת": { translation: "trustworthiness, truth", easy: true }, // Corrected vowel
+    "אֲנַחְנוּ": { translation: "we", easy: true },
+    "אָנֹכִי, אֲנִי": { translation: "I", easy: true },
+    "אסף√": {
+        translation: "gather",
+        easy: true,
+        words: ["אֲסֵפָה - Gathering", "אֹסֶף - collection", "אֲסֻפִּים - storehouses"], // Gathering, collection, storehouses
+        confusables: ["אסר√", "יסף√", "ספח√", "ספה√", "אפס√", "קצף√", "חשף√", "אשף√"]
+    },
+    "אסר√": {
+        translation: "tie; be imprisoned",
+        easy: false,
+        words: ["אִסָּר - Bond", "מוֹסֵר - bond", "אֵסוּר - imprisonment"], // Bond, bond, imprisonment
+        confusables: ["אסף√", "סור√", "יסר√", "אזר√", "עצר√", "שׂור√", "קשר√", "נצר√"]
+    },
+    "אַף": { translation: "nose, nostril; anger; also, even, the more so", easy: false },
+    "אֵצֶל": { translation: "side; beside", easy: false },
+    "אָרוֹן": { translation: "ark", easy: false },
+    "אֶרֶז": { translation: "cedar", easy: false },
+    "אֹרַח": { translation: "way, path", easy: true },
+    "אֲרִי, אַרְיֵה": { translation: "(m, m and f) lion", easy: false },
+    "אֹרֶךְ": { translation: "length", easy: false },
+    "אֶרֶץ": { translation: "earth, land", easy: true },
+    "ארר√": {
+        translation: "curse",
+        easy: false,
+        words: ["אֲרוּר - Cursed (adj.)", "מְאֵרָה - curse (n.)"], // Cursed (adj.), curse (n.)
+        confusables: ["אור√", "ארך√", "עור√", "חרר√", "סרר√", "מרר√", "ערר√", "יָרָה√"]
+    },
+    "אֵשׁ": { translation: "fire", easy: true },
+    "אִשֶּׁה": { translation: "offering by fire", easy: false },
+    "אִשָּׁה, נָשִׁים": { translation: "(s, pl) woman", easy: true },
+    "אֲשֶׁר": { translation: "who, which, that", easy: true },
+    "אֵת": { translation: "(object marker, not translated); with, beside", easy: true }, // Very frequent
+    "אַתְּ": { translation: "(f s) you", easy: true },
+    "אַתָּה": { translation: "(m s) you", easy: true },
+    "אַתֶּם": { translation: "(m pl) you", easy: true },
+    "אַתֶּן": { translation: "(f pl) you", easy: true },
+    "בְּאֵר": { translation: "well, pit", easy: false },
+    "בֶּגֶד": { translation: "item of clothing, garment", easy: false },
+    "בְּהֵמָה": { translation: "cattle, animals", easy: true },
+    "בוא√": {
+        translation: "go in, enter, come",
+        easy: true,
+        words: ["תְּבוּאָה - Produce/income", "מָבוֹא - entrance"], // Produce/income, entrance
+        confusables: ["בוז√", "בין√", "קום√", "סור√", "נוס√", "אבה√", "יבא√", "טוב√"]
+    },
+    "בּוֹר": { translation: "pit, well", easy: false },
+    "בושׁ√": {
+        translation: "be ashamed",
+        easy: false,
+        words: ["בֹּשֶׁת - Shame", "מְבוּשִׁים - private parts"], // Shame, private parts
+        confusables: ["בזה√", "נושׁ√", "יבשׁ√", "כושׁ√", "רושׁ√", "דושׁ√", "בוס√", "באַשׁ√"]
+    },
+    "בחר√": {
+        translation: "choose",
+        easy: true,
+        words: ["בָּחוּר - Young man/chosen one", "מִבְחָר - choicest part", "בְּחִיר - chosen one"], // Young man/chosen one, choicest part, chosen one
+        confusables: ["בכר√", "בטח√", "ברח√", "חבר√", "נכר√", "סחר√", "כפר√", "זכר√"]
+    },
+    "בטח√": {
+        translation: "trust",
+        easy: false,
+        words: ["בֶּטַח - Security/trust", "מִבְטָח - confidence/trust"], // Security/trust, confidence/trust
+        confusables: ["בחר√", "פתח√", "שפח√", "זבח√", "טבח√", "נבח√", "שׂבע√", "בלע√"]
+    },
+    "בֶּטֶן": { translation: "belly, womb", easy: false },
+    "בֵּין": { translation: "between", easy: true },
+    "בין√": {
+        translation: "understand",
+        easy: true,
+        words: ["תְּבוּנָה - Understanding", "בִּינָה - understanding"], // Understanding, understanding
+        confusables: ["בוא√", "בנה√", "דין√", "עין√", "לין√", "מין√", "נין√", "שׁנן√"]
+    },
+    "בַּיִת": { translation: "house", easy: true },
+    "בכה√": {
+        translation: "cry",
+        easy: true,
+        words: ["בְּכִי - Weeping", "בִּכְיָה - weeping"], // Weeping, weeping
+        confusables: ["בנה√", "בקר√", "נכה√", "שכה√", "הכה√", "לכה√", "סכה√", "ברך√"]
+    },
+    "בְּכוֹר": { translation: "firstborn", easy: false },
+    "בִּלְתִּי; לְבִלְתִּי": { translation: "not, except; not to", easy: false },
+    "בָּמָה": { translation: "high place", easy: false },
+    "בֵּן": { translation: "son", easy: true },
+    "בנה√": {
+        translation: "build",
+        easy: true,
+        words: ["בֵּן - Son (related?)", "בַּת - daughter (related?)", "תַּבְנִית - pattern/form", "מִבְנֶה - structure"], // Son (related?), daughter (related?), pattern/form, structure
+        confusables: ["בזה√", "פנה√", "קנה√", "ענה√", "שנה√", "בכה√", "בין√", "מנה√"]
+    },
+    "בַּעַד, בְּעַד": { translation: "behind, through, for (the benefit of)", easy: false },
+    "בַּעַל": { translation: "owner, husband; idol (Baal)", easy: false },
+    "בער√": {
+        translation: "burn, remove",
+        easy: false,
+        words: ["בְּעִיר - Cattle (related?)", "מַבְעֵר - burning"], // Cattle (related?), burning
+        confusables: ["באר√", "בכר√", "סער√", "פער√", "נער√", "גער√", "יער√", "קער√"]
+    },
+    "בקע√": {
+        translation: "split",
+        easy: false,
+        words: ["בִּקְעָה - Valley/plain", "בֶּקַע - half-shekel/split"], // Valley/plain, half-shekel/split
+        confusables: ["בקר√", "פקע√", "רקע√", "שׂקע√", "נקע√", "נקב√", "בכה√", "קבע√"]
+    },
+    "בָּקָר": { translation: "cows, herds, cattle", easy: true },
+    "בֹּקֶר": { translation: "morning", easy: true },
+    "בקשׁ√": {
+        translation: "ask, search, want",
+        easy: true,
+        words: ["בַּקָּשָׁה - Request"], // Request
+        confusables: ["ברך√", "קשׁשׁ√", "חשׁק√", "כבשׁ√", "לקשׁ√", "נשׂק√", "פקד√", "שׁקה√"]
+    },
+    "ברא√": {
+        translation: "create",
+        easy: true,
+        words: ["בְּרִיאָה - Creation"], // Creation
+        confusables: ["קרא√", "כרת√", "פרץ√", "ברח√", "ברך√", "ירה√", "ראה√", "ערה√"]
+    },
+    "בַּרְזֶל": { translation: "iron", easy: false },
+    "ברח√": {
+        translation: "run away, flee",
+        easy: true,
+        words: ["בְּרִיחַ - Bar (of gate)", "מִבְרָח - fugitive"], // Bar (of gate), fugitive
+        confusables: ["ברך√", "בחר√", "פרח√", "ארח√", "זרח√", "כרח√", "ברא√", "קרח√"]
+    },
+    "בְּרִית": { translation: "covenant, promise, agreement", easy: true },
+    "ברך√": {
+        translation: "bless",
+        easy: true,
+        words: ["בְּרָכָה - Blessing", "בֶּרֶךְ - knee (related?)"], // Blessing, knee (related?)
+        confusables: ["ברח√", "דרך√", "ארך√", "כרע√", "ערך√", "פרך√", "ברא√", "שרך√"]
+    },
+    "בְּרָכָה": { translation: "blessing", easy: true },
+    "בָּשָׂר": { translation: "flesh, meat, living creatures", easy: true },
+    "בַּת": { translation: "daughter", easy: true },
+    "בְּתוֹךְ": { translation: "see תָּוֶךְ", easy: true }, // Easy as it's a common preposition
+    "בְּתוּלָה": { translation: "virgin", easy: false },
+    "גאל√": {
+        translation: "redeem",
+        easy: false,
+        words: ["גֹּאֵל - Redeemer", "גְּאֻלָּה - redemption"], // Redeemer, redemption
+        confusables: ["גמל√", "גדל√", "געל√", "גזל√", "גחל√", "אכל√", "נאל√", "שאל√"]
+    },
+    "גבהּ√": {
+        translation: "be high",
+        easy: false,
+        words: ["גָּבֹהַּ - High", "גֹּבַהּ - height", "גַּבְהוּת - pride"], // High, height, pride
+        confusables: ["קבה√", "רבה√", "נבה√", "זבח√", "גבע√", "אבה√", "טבח√", "לוה√"]
+    },
+    "גְּבוּל": { translation: "boundary, territory", easy: false },
+    "גְּבוּרָה": { translation: "strength", easy: false },
+    "גֶּבֶר": { translation: "young man; strong man", easy: false },
+    "גִּבּוֹר": { translation: "warrior, strong man", easy: false },
+    "גִּבְעָה": { translation: "hill; (cultic) high place", easy: false },
+    "גדל√": {
+        translation: "be(come) strong, great; bring up, let grow, nourish",
+        easy: true,
+        words: ["גָּדוֹל - Great", "גֹּדֶל - greatness", "מִגְדָּל - tower", "גְּדֻלָּה - greatness"], // Great, greatness, tower, greatness
+        confusables: ["גזל√", "חדל√", "גמל√", "גאל√", "דגל√", "קדל√", "גלל√", "בדל√"]
+    },
+    "גָּדוֹל": { translation: "great", easy: true },
+    "גּוֹי": { translation: "people, nation", easy: true },
+    "גור√": {
+        translation: "sojourn, live temporarily",
+        easy: false,
+        words: ["גֵּר - Stranger/sojourner", "מָגוֹר - temporary dwelling/fear"], // Stranger/sojourner, temporary dwelling/fear
+        confusables: ["דור√", "סור√", "צור√", "אור√", "יגר√", "כור√", "נור√", "שור√"]
+    },
+    "גֵּר": { translation: "stranger", easy: false },
+    "גּוֹרָל": { translation: "lot, lottery; allotment, portion", easy: false },
+    "גלה√": {
+        translation: "reveal; depart; go into exile",
+        easy: false,
+        words: ["גּוֹלָה - Exile (community)", "גָּלוּת - exile (state)", "מְגִלָּה - scroll (revealed?)"], // Exile (community), exile (state), scroll (revealed?)
+        confusables: ["כלה√", "גזל√", "בלה√", "עלה√", "קלל√", "שלה√", "גבה√", "חלה√"]
+    },
+    "גַּם": { translation: "also, indeed", easy: true },
+    "גָּמָל": { translation: "camel", easy: false },
+    "גֶּפֶן": { translation: "vine, grape", easy: false },
+    "דבק√": {
+        translation: "stick to, stay close",
+        easy: false,
+        words: ["דָּבֵק - Clinging (adj)", "דֶּבֶק - solder/joining"], // Clinging (adj), solder/joining
+        confusables: ["דקר√", "דלג√", "רבק√", "דמם√", "בלק√", "נשק√", "בקע√", "דפק√"]
+    },
+    "דבר√": {
+        translation: "speak",
+        easy: true, // Very common root
+        words: ["דָּבָר - Word/thing", "מִדְבָּר - wilderness (place of speaking?)", "דְּבִיר - inner sanctuary"], // Word/thing, wilderness (place of speaking?), inner sanctuary
+        confusables: ["זכר√", "ספר√", "עבר√", "קבר√", "חבר√", "שבר√", "צבר√", "כבר√"]
+    },
+    "דָּבָר": { translation: "word, thing, matter", easy: true }, // Very common word
+    "דְּבַשׁ": { translation: "honey", easy: false },
+    "דּוֹד": { translation: "beloved, lover; uncle", easy: false },
+    "דּוֹר": { translation: "generation", easy: false },
+    "דֶּלֶת": { translation: "door", easy: false },
+    "דָּם": { translation: "blood", easy: true },
+    "דרך√": {
+        translation: "tread",
+        easy: false,
+        words: ["דֶּרֶךְ - Way/road", "מַדְרֵךְ - stepping place"], // Way/road, stepping place
+        confusables: ["ברך√", "ארך√", "ערך√", "זרע√", "דרשׁ√", "כרך√", "פרך√", "סרך√"]
+    },
+    "דֶּרֶךְ": { translation: "way, road, journey; custom", easy: true },
+    "דרשׁ√": {
+        translation: "seek, ask",
+        easy: false,
+        words: ["מִדְרָשׁ - Inquiry/study"], // Inquiry/study
+        confusables: ["קדשׁ√", "פרשׂ√", "חרשׁ√", "גרשׁ√", "ארשׂ√", "דרך√", "כרס√", "רשׁע√"]
+    },
+    "הֶבֶל": { translation: "breath; vanity, idol(s)", easy: false },
+    "הוּא": { translation: "he", easy: true },
+    "הִיא": { translation: "she", easy: true },
+    "היה√": {
+        translation: "be, happen, become",
+        easy: true, // Most common root
+        words: ["יְהִי - Let there be", "הֹוֶה - present (participle)"], // Let there be, present (participle)
+        confusables: ["חיה√", "חוה√", "הוה√", "עוה√", "אוה√", "לוה√", "צוה√", "קוה√"]
+    },
+    "הֵיכָל": { translation: "palace, temple", easy: false },
+    "הלך√": {
+        translation: "go, walk",
+        easy: true, // Very common root
+        words: ["מַהֲלָךְ - Journey", "הֲלִיכָה - walk/procession", "תַּהֲלוּכָה - procession"], // Journey, walk/procession, procession
+        confusables: ["מלך√", "אכל√", "הלל√", "הפך√", "הרג√", "ילך√", "בלע√", "שלך√"]
+    },
+    "הלל√": {
+        translation: "praise",
+        easy: true,
+        words: ["תְּהִלָּה - Praise", "הַלְלוּיָהּ - Hallelujah"], // Praise, Hallelujah
+        confusables: ["חלל√", "קלל√", "גלל√", "עלל√", "צלל√", "ילל√", "הלך√", "צלל√"]
+    },
+    "תְּהִלָּה": { translation: "glory, praise", easy: false },
+    "הֵם, הֵמָּה": { translation: "(m) they, those", easy: true },
+    "הָמוֹן": { translation: "tumult, turmoil, crowd", easy: false },
+    "הִנֵּה": { translation: "behold!", easy: true },
+    "הֵן": { translation: "behold!; if", easy: true },
+    "הֵנָּה": { translation: "(f) they; here", easy: true },
+    "הפך√": {
+        translation: "turn, overturn",
+        easy: false,
+        words: ["הֲפֵכָה - Overthrow", "מַהְפֵּכָה - overthrow", "תַּהְפּוּכָה - perversity"], // Overthrow, overthrow, perversity
+        confusables: ["שפך√", "חפץ√", "הלך√", "ספח√", "אפך√", "נפץ√", "קדח√", "דפק√"]
+    },
+    "הַר": { translation: "mountain, range", easy: true },
+    "הרג√": {
+        translation: "kill",
+        easy: true,
+        words: ["הֶרֶג - Slaughter", "הֲרוּגָה - slain woman"], // Slaughter, slain woman
+        confusables: ["ארג√", "ערג√", "חרג√", "פרע√", "קרע√", "זרע√", "ברך√", "הלך√"]
+    },
+    "זבח√": {
+        translation: "sacrifice",
+        easy: false, // Root itself might be less common than noun
+        words: ["זֶבַח - Sacrifice", "מִזְבֵּחַ - altar"], // Sacrifice, altar
+        confusables: ["זנח√", "טבח√", "נבח√", "שׂבח√", "זחל√", "פתח√", "בטח√", "זעק√"]
+    },
+    "זֶבַח": { translation: "sacrifice", easy: false },
+    "מִזְבֵּחַ": { translation: "altar", easy: false },
+    "זֶה, זֹאת": { translation: "(m, f) this", easy: true },
+    "זָהָב": { translation: "gold", easy: true },
+    "זָכָר": { translation: "man, male", easy: false },
+    "זכר√": {
+        translation: "remember, mention",
+        easy: true,
+        words: ["זֵכֶר - Memory/memorial", "זִכָּרוֹן - memorial", "אַזְכָּרָה - memorial portion (of offering)"], // Memory/memorial, memorial, memorial portion (of offering)
+        confusables: ["סכר√", "שׂכר√", "דכר√", "זמר√", "זעק√", "חקר√", "נכר√", "שכר√"]
+    },
+    "זנה√": {
+        translation: "commit adultery, be a prostitute, be unfaithful",
+        easy: false,
+        words: ["זוֹנָה - Prostitute", "זְנוּת - prostitution", "תַּזְנוּת - prostitution"], // Prostitute, prostitution, prostitution
+        confusables: ["זמם√", "חנה√", "קנה√", "ענה√", "פנה√", "שנה√", "בנה√", "גנה√"]
+    },
+    "זעק√": {
+        translation: "cry out; call to arms",
+        easy: false,
+        words: ["זְעָקָה - Outcry"], // Outcry
+        confusables: ["צעק√", "שׂחק√", "צחק√", "זכר√", "יצק√", "דבק√", "חזק√", "זקן√"]
+    },
+    "זָקֵן": { translation: "old; old man, elder", easy: false },
+    "זָר": { translation: "strange, different", easy: false },
+    "זְרוֹעַ": { translation: "arm", easy: false },
+    "זרע√": {
+        translation: "sow",
+        easy: false,
+        words: ["זֶרַע - Seed/descendants", "זֵרוּעַ - something sown", "מִזְרָע - place of sowing"], // Seed/descendants, something sown, place of sowing
+        confusables: ["זרק√", "זעם√", "כרע√", "פרע√", "גרע√", "שרע√", "דרע√", "זכר√"]
+    },
+    "זֶרַע": { translation: "seed, descendants", easy: true },
+    "חָג, חַג": { translation: "festival, feast", easy: true },
+    "חדל√": {
+        translation: "stop",
+        easy: false,
+        words: ["חָדֵל - Ceasing (adj.)", "חֶדֶל - cessation/underworld"], // Ceasing (adj.), cessation/underworld
+        confusables: ["חבל√", "גדל√", "חדשׁ√", "חלל√", "חמל√", "יחד√", "נדל√", "חמד√"]
+    },
+    "חָדָשׁ": { translation: "new, fresh", easy: true },
+    "חֹדֶשׁ": { translation: "new moon, month", easy: true },
+    "חוה√": { translation: "see שׁחה√", easy: false }, // Meta word
+    "חוֹמָה": { translation: "(city) wall", easy: false },
+    "חוּץ": { translation: "outside, street", easy: true },
+    "חזה√": {
+        translation: "see",
+        easy: true,
+        words: ["חָזוֹן - Vision", "מַחֲזֶה - vision", "חֹזֶה - seer"], // Vision, vision, seer
+        confusables: ["חזק√", "אחז√", "חצה√", "חסה√", "חטא√", "חכה√", "חקר√", "חצב√"]
+    },
+    "חזק√": {
+        translation: "be(come) strong; seize, grasp",
+        easy: true,
+        words: ["חָזָק - Strong", "חֹזֶק - strength", "חֶזְקָה - strength/force"], // Strong, strength, strength/force
+        confusables: ["חזה√", "חשׂך√", "חשׁק√", "חבק√", "חלק√", "חצב√", "קצח√", "עזק√"]
+    },
+    "חָזָק": { translation: "hard, strong", easy: true },
+    "חטא√": {
+        translation: "sin, transgress (a law); miss (a mark)",
+        easy: true,
+        words: ["חֵטְא - Sin", "חַטָּאת - sin/sin-offering", "חַטָּא - sinner"], // Sin, sin/sin-offering, sinner
+        confusables: ["חטה√", "חצב√", "חبط√", "חזה√", "שׂטה√", "חפה√", "חנה√", "חסה√"]
+    },
+    "חֵטְא": { translation: "sin", easy: true },
+    "חַטָאת": { translation: "sin; sin-offering", easy: false }, // More specific
+    "חיה√": {
+        translation: "live, be alive",
+        easy: true, // Common root
+        words: ["חַי - Life/living", "חַיִּים - life/lifetime", "חַיָּה - animals"], // Life/living, life/lifetime, animals
+        confusables: ["חלה√", "חוה√", "היה√", "חמה√", "חנה√", "חסה√", "חבא√", "חטא√"]
+    },
+    "חַי; חַיִּים": { translation: "life, living; lifetime", easy: true },
+    "חַיָּה": { translation: "(s or pl) animals", easy: true },
+    "חַיִל": { translation: "strength; wealth; army", easy: false }, // Multiple meanings, somewhat abstract
+    "חָכָם": { translation: "wise", easy: true },
+    "חָכְמָה": { translation: "wisdom", easy: true },
+    "חֵלֶב": { translation: "fat", easy: false },
+    "חלה√": {
+        translation: "be(come) weak, ill",
+        easy: false,
+        words: ["חֹלִי - Sickness", "מַחֲלֶה - disease", "תַּחֲלוּאִים - diseases"], // Sickness, disease, diseases
+        confusables: ["חלל√", "חיה√", "כלה√", "חמל√", "חלק√", "חבשׁ√", "חלחל√", "גלה√"]
+    },
+    "חֲלוֹם": { translation: "dream", easy: false },
+    "חלל√": {
+        translation: "pollute; begin",
+        easy: false,
+        words: ["חָלָל - Slain/polluted", "תְּחִלָּה - beginning", "חוֹל - sand/profane"], // Slain/polluted, beginning, sand/profane
+        confusables: ["חלה√", "הלל√", "כלל√", "עלל√", "גלל√", "צלל√", "שׂכל√", "חדל√"]
+    },
+    "חָלָל": { translation: "slain, struck dead", easy: false },
+    "חלק√": {
+        translation: "divide; scatter",
+        easy: false,
+        words: ["חֵלֶק - Part/portion", "מַחֲלֹקֶת - division/dispute", "חֲלֻקָּה - division"], // Part/portion, division/dispute, division
+        confusables: ["חבק√", "חזק√", "חלך√", "חלט√", "חלה√", "בלק√", "לקח√", "דלק√"]
+    },
+    "חֵלֶק": { translation: "part, portion", easy: false },
+    "חֵמָה": { translation: "heat; anger", easy: false },
+    "חֲמוֹר": { translation: "donkey", easy: false },
+    "חָמָס": { translation: "violence, wrong", easy: false },
+    "חנה√": {
+        translation: "camp",
+        easy: false,
+        words: ["מַחֲנֶה - Camp/army"], // Camp/army
+        confusables: ["חנן√", "חטא√", "חיה√", "חמה√", "בנה√", "קנה√", "ענה√", "פנה√"]
+    },
+    "מַחֲנֶה": { translation: "camp, army", easy: true }, // More frequent noun
+    "חנן√": {
+        translation: "be gracious to, favour",
+        easy: true,
+        words: ["חֵן - Charm/grace", "תְּחִנָּה - supplication", "חַנּוּן - gracious"], // Charm/grace, supplication, gracious
+        confusables: ["חנה√", "חמן√", "חנם√", "חפץ√", "חמת√", "חפף√", "אמן√", "ענן√"]
+    },
+    "חֵן": { translation: "charm, grace, favour", easy: false },
+    "חֶסֶד": { translation: "loyalty, kindness", easy: true }, // Important theological concept, frequent
+    "חפץ√": {
+        translation: "please, desire, take pleasure",
+        easy: false,
+        words: ["חֵפֶץ - Desire/pleasure", "חָפֵץ - desiring (adj)"], // Desire/pleasure, desiring (adj)
+        confusables: ["חפשׂ√", "חפר√", "חבץ√", "חנן√", "קפץ√", "עפץ√", "חבט√", "רפשׂ√"]
+    },
+    "חֵץ": { translation: "arrow", easy: false },
+    "חֲצִי": { translation: "half", easy: false },
+    "חָצֵר": { translation: "courtyard, village", easy: false },
+    "חֹק": { translation: "law, statute", easy: false },
+    "חֻקָּה": { translation: "law, statute, custom", easy: false },
+    "חֶרֶב": { translation: "sword", easy: true },
+    "חרה√": {
+        translation: "be(come) hot, angry",
+        easy: false,
+        words: ["חָרוֹן - Burning anger", "חֹרִי - burning anger"], // Burning anger, burning anger
+        confusables: ["חרם√", "חרשׁ√", "כרע√", "קרה√", "ברח√", "פרה√", "ערה√", "ירה√"]
+    },
+    "חרם√": {
+        translation: "ban, destroy",
+        easy: false,
+        words: ["חֵרֶם - Ban/devotion to destruction"], // Ban/devotion to destruction
+        confusables: ["חרה√", "כרם√", "חכם√", "רחם√", "ארם√", "זרם√", "סרם√", "פרם√"]
+    },
+    "חשׁב√": {
+        translation: "account, regard, value, think",
+        easy: true,
+        words: ["מַחֲשָׁבָה - Thought", "חֵשֶׁב - girdle/artistic band", "חִשָּׁבוֹן - account/reason"], // Thought, girdle/artistic band, account/reason
+        confusables: ["חצב√", "חשׂך√", "חשׁק√", "יבשׁ√", "קשׁב√", "נשׁב√", "ישׁב√", "שכב√"]
+    },
+    "מַחֲשָׁבָה": { translation: "thought", easy: false },
+    "חֹשֶׁךְ": { translation: "darkness", easy: true },
+    "טהר√": {
+        translation: "be clean, pure",
+        easy: true,
+        words: ["טָהוֹר - Clean/pure", "טֹהַר - purity", "טָהֳרָה - purification"], // Clean/pure, purity, purification
+        confusables: ["זהר√", "צהר√", "נהר√", "סֹהַר√", "טבע√", "טען√", "טחן√", "טמן√"]
+    },
+    "טָהוֹר": { translation: "clean, pure", easy: true },
+    "טוב√": {
+        translation: "be good, pleasant",
+        easy: true,
+        words: ["טוֹב - Good/goodness", "טוּב - goodness/prosperity"], // Good/goodness, goodness/prosperity
+        confusables: ["טבע√", "טוח√", "טען√", "יטב√", "שוט√", "סוב√", "עוף√", "בוא√"]
+    },
+    "טוֹב": { translation: "good; goodness", easy: true },
+    "טמא√": {
+        translation: "be impure",
+        easy: false,
+        words: ["טָמֵא - Impure", "טֻמְאָה - impurity"], // Impure, impurity
+        confusables: ["טמן√", "טעה√", "שמא√", "צמא√", "דמה√", "כמה√", "עמה√", "רמה√"]
+    },
+    "טָמֵא, טְמֵאָה": { translation: "impure", easy: false },
+    "טֶרֶם, בְּטֶרֶם": { translation: "not yet; before", easy: false },
+    "יְאֹר": { translation: "(great) river (Nile, Euphrates)", easy: false },
+    "יבשׁ√": {
+        translation: "be dry; dry up",
+        easy: false,
+        words: ["יַבָּשָׁה - Dry land", "יָבֵשׁ - dry"], // Dry land, dry
+        confusables: ["בושׁ√", "ישׁב√", "כבשׁ√", "לבשׁ√", "יבם√", "יבק√", "רבש√", "חדשׁ√"]
+    },
+    "יָד": { translation: "hand", easy: true },
+    "ידה√": {
+        translation: "thank, praise, confess; throw",
+        easy: false,
+        words: ["תּוֹדָה - Thanksgiving/praise offering"], // Thanksgiving/praise offering
+        confusables: ["ידע√", "ידן√", "ידד√", "עדה√", "ירה√", "היה√", "רדה√", "סדה√"]
+    },
+    "ידע√": {
+        translation: "know, notice",
+        easy: true,
+        words: ["דַּעַת - Knowledge", "מַדּוּעַ - why?", "מוֹדַעַת - kinswoman"], // Knowledge, why?, kinswoman
+        confusables: ["ידה√", "יעד√", "ודע√", "דעה√", "עדה√", "יצע√", "יגע√", "יצב√"]
+    },
+    "דַּעַת": { translation: "knowledge", easy: false },
+    "מַדּוּעַ": { translation: "why?", easy: false },
+    "י-ה-ו-ה": { translation: "Name of G-d (will appear in assessment as יי)", easy: true }, // Very high frequency
+    "יוֹם": { translation: "day", easy: true }, // Most frequent noun
+    "יוֹמָם": { translation: "in the daytime; daily", easy: false },
+    "יַחַד, יַחְדָּו": { translation: "together", easy: true },
+    "יטב√": {
+        translation: "be good",
+        easy: true,
+        words: ["מֵיטָב - Best part"], // Best part
+        confusables: ["טוב√", "יצב√", "יסד√", "ידה√", "ידע√", "ישׁב√", "ינק√", "יזע√"]
+    },
+    "יַיִן": { translation: "wine", easy: false },
+    "יכח√": {
+        translation: "dispute; rebuke, punish; decide",
+        easy: false,
+        words: ["תּוֹכַחַת - Rebuke/argument"], // Rebuke/argument
+        confusables: ["יכל√", "ילך√", "נקם√", "כחשׁ√", "שכח√", "מכך√", "סכך√", "נכח√"]
+    },
+    "יכל√": {
+        translation: "be able",
+        easy: true,
+        words: ["יָכוֹל - Able (adj/verb form)"], // Able (adj/verb form)
+        confusables: ["אכל√", "יכח√", "יחל√", "שׂכל√", "יגל√", "יעל√", "יבל√", "נכל√"]
+    },
+    "ילד√": {
+        translation: "bring forth, give birth",
+        easy: true,
+        words: ["יֶלֶד - Child (m)", "יַלְדָּה - child (f)", "תּוֹלֵדוֹת - generations/descendants"], // Child (m), child (f), generations/descendants
+        confusables: ["ילל√", "ילך√", "יעד√", "יסד√", "למד√", "ולד√", "בלד√", "כלה√"]
+    },
+    "יָם": { translation: "sea; west", easy: true },
+    "יָמִין": { translation: "right hand; south", easy: false },
+    "יסף√": {
+        translation: "continue, add; stop",
+        easy: true,
+        words: ["יוֹסֵף - Joseph (He adds)", "תּוֹסֶפֶת - addition"], // Joseph (He adds), addition
+        confusables: ["אסף√", "יסר√", "סוף√", "ישׂם√", "יצב√", "ישׁב√", "נשׂג√", "קצף√"]
+    },
+    "יעד√": {
+        translation: "meet, gather, set",
+        easy: false,
+        words: ["מוֹעֵד - Appointed time/place", "עֵדָה - congregation"], // Appointed time/place, congregation
+        confusables: ["ידע√", "ידה√", "עוד√", "עדה√", "יסד√", "יצא√", "יעל√", "יצק√"]
+    },
+    "מוֹעֵד": { translation: "appointed place or time; season", easy: false },
+    "עֵדָה": { translation: "congregation, community", easy: true }, // Common term for Israel
+    "יַעַן": { translation: "on account of; because", easy: false },
+    "יעץ√": {
+        translation: "give advice; ask advice",
+        easy: false,
+        words: ["עֵצָה - Advice", "יוֹעֵץ - counselor"], // Advice, counselor
+        confusables: ["יצא√", "עוץ√", "עשה√", "יסר√", "יצב√", "עזר√", "רעץ√", "יגע√"]
+    },
+    "עֵצָה": { translation: "advice", easy: false },
+    "יַעַר": { translation: "forest", easy: false },
+    "יצא√": {
+        translation: "go out, come out",
+        easy: true, // Very common root
+        words: ["מוֹצָא - Outlet/source", "צֶאֱצָאִים - offspring", "תּוֹצָאָה - outcome/boundary"], // Outlet/source, offspring, outcome/boundary
+        confusables: ["יצע√", "יצק√", "יצר√", "יצב√", "ידע√", "יעץ√", "יבשׁ√", "נצא√"]
+    },
+    "יצק√": {
+        translation: "pour out (liquid)",
+        easy: false,
+        words: ["יְצֻקָה - Casting (metal)", "מוּצָק - cast metal/firm"], // Casting (metal), cast metal/firm
+        confusables: ["יצא√", "יצר√", "יצב√", "שפך√", "נצק√", "צוק√", "זעק√", "חזק√"]
+    },
+    "ירא√": {
+        translation: "fear, be afraid",
+        easy: true, // Common, important concept
+        words: ["יִרְאָה - Fear (n)", "נוֹרָא - awesome/fearful", "מוֹרָא - fear/terror"], // Fear (n), awesome/fearful, fear/terror
+        confusables: ["ראה√", "ירה√", "ידה√", "ארר√", "יער√", "מרר√", "גרר√", "חור√"]
+    },
+    "ירד√": {
+        translation: "go down",
+        easy: true, // Very common root
+        words: ["מוֹרָד - Descent/slope", "יַרְדֵּן - Jordan (Goes down)"], // Descent/slope, Jordan (Goes down)
+        confusables: ["ירה√", "רדה√", "ידה√", "ידע√", "יסד√", "ירה√", "ירשׁ√", "ערד√"]
+    },
+    "ירה√": {
+        translation: "instruct, teach; shoot",
+        easy: false, // Root itself
+        words: ["תּוֹרָה - Teaching/law", "מוֹרֶה - teacher", "יוֹרֶה - early rain"], // Teaching/law, teacher, early rain
+        confusables: ["ירא√", "ראה√", "ירה√", "ירה√", "הרס√", "ידה√", "ירד√", "כרה√"]
+    },
+    "תּוֹרָה": { translation: "teaching, law", easy: true }, // Very common word
+    "יְרִיעָה": { translation: "curtain, tent", easy: false },
+    "ירשׁ√": {
+        translation: "possess, inherit; dispossess",
+        easy: false,
+        words: ["יְרֻשָּׁה - Inheritance", "מוֹרָשָׁה - possession", "רֶשֶׁת - net (related?)"], // Inheritance, possession, net (related?)
+        confusables: ["דרשׁ√", "חרשׁ√", "פרשׂ√", "ארשׂ√", "רשׁע√", "ירד√", "ידה√", "יגר√"]
+    },
+    "יֵשׁ": { translation: "there is/are", easy: true }, // Very frequent
+    "ישׁב√": {
+        translation: "sit, live",
+        easy: true, // Very common root
+        words: ["יֹשֵׁב - Inhabitant", "מוֹשָׁב - dwelling/seat", "תּוֹשָׁב - sojourner/resident alien"], // Inhabitant, dwelling/seat, sojourner/resident alien
+        confusables: ["שׁוב√", "יבשׁ√", "חשׁב√", "נשׁב√", "ישׁע√", "שׂבע√", "ישׂם√", "יצב√"]
+    },
+    "יֹשֵׁב": { translation: "inhabitant", easy: false },
+    "ישׁע√": {
+        translation: "be saved; save",
+        easy: true, // Common root
+        words: ["יְשׁוּעָה - Salvation", "תְּשׁוּעָה - salvation", "מוֹשִׁיעַ - savior"], // Salvation, salvation, savior
+        confusables: ["עשׂה√", "ישׁב√", "שׁעה√", "שׁמע√", "רשׁע√", "שׁבע√", "שׂבע√", "יצא√"]
+    },
+    "יְשׁוּעָה": { translation: "salvation", easy: true },
+    "יָשָׁר": { translation: "straight, right, upright", easy: true },
+    "יתר√": {
+        translation: "be left, remain",
+        easy: true,
+        words: ["יֶתֶר - Remainder", "יוֹתֵר - remainder/more", "יִתְרוֹן - advantage"], // Remainder, remainder/more, advantage
+        confusables: ["נתר√", "סתר√", "כתר√", "עתר√", "שׁאר√", "פטר√", "תור√", "קטר√"]
+    },
+    "יֶתֶר": { translation: "remainder", easy: false },
+    "כַּאֲשֶׁר": { translation: "as", easy: true }, // Frequent conjunction
+    "כבד√": {
+        translation: "be heavy, be honoured",
+        easy: true,
+        words: ["כָּבוֹד - Honour/glory", "כָּבֵד - heavy/liver"], // Honour/glory, heavy/liver
+        confusables: ["עבד√", "אבד√", "כבה√", "כפר√", "כדר√", "רכב√", "שכב√", "נקב√"]
+    },
+    "כָּבוֹד": { translation: "honour, glory; possessions", easy: true },
+    "כבס√": {
+        translation: "wash",
+        easy: false,
+        words: ["כֹּבֵס - Fuller/launderer"], // Fuller/launderer
+        confusables: ["כבשׁ√", "כבושׁ√", "לבשׁ√", "כרסם√", "חבשׁ√", "קבר√", "כבד√", "עבט√"]
+    },
+    "כֶּבֶשׂ, כִּבְשָׂה": { translation: "(m, f) lamb, sheep", easy: false },
+    "כֹּה": { translation: "so, this", easy: true }, // Frequent
+    "כֹּהֵן": { translation: "priest", easy: true },
+    "כון√": {
+        translation: "be established; establish; prepare",
+        easy: false,
+        words: ["כֵּן - Right/thus", "מָכוֹן - place/base", "תְּכוּנָה - arrangement/preparation", "כַּנָּה - base/pedestal"], // Right/thus, place/base, arrangement/preparation, base/pedestal
+        confusables: ["כהן√", "קנה√", "חנן√", "בין√", "שכן√", "עון√", "טמן√", "כפן√"]
+    },
+    "כֹּחַ": { translation: "strength, power", easy: true },
+    "כִּי": { translation: "because, for, that, when, but, indeed", easy: true }, // Extremely frequent
+    "כִּכָּר": { translation: "loaf of bread; coin; area of land", easy: false },
+    "כָּל, כּוֹל": { translation: "all, every", easy: true }, // Extremely frequent
+    "כלה√": {
+        translation: "finish, complete",
+        easy: true,
+        words: ["כָּלָה - Completion/destruction", "כִּלְיוֹן - destruction", "תַּכְלִית - end/purpose"], // Completion/destruction, destruction, end/purpose
+        confusables: ["כלא√", "כחשׁ√", "כסה√", "גלה√", "חלה√", "עלה√", "קלה√", "שלה√"]
+    },
+    "כְּלִי": { translation: "vessel, utensil, weapon", easy: true },
+    "כְּמוֹ": { translation: "just like", easy: true }, // Frequent preposition
+    "כֵּן": { translation: "this, so; correctly; right", easy: true }, // Frequent
+    "לָכֵן": { translation: "therefore", easy: true }, // Frequent
+    "כָּנָף": { translation: "wing, corner", easy: false },
+    "כִּסֵּא": { translation: "seat, throne", easy: false },
+    "כסה√": {
+        translation: "cover",
+        easy: false,
+        words: ["מִכְסֶה - Covering", "כְּסוּת - covering/clothing"], // Covering, covering/clothing
+        confusables: ["כלה√", "כחשׁ√", "כעס√", "קסה√", "חסה√", "עסה√", "פסה√", "נשא√"]
+    },
+    "כֶּסֶף": { translation: "silver, money", easy: true },
+    "כעס√": {
+        translation: "(be) irritated, angry",
+        easy: false,
+        words: ["כַּעַס - Anger/vexation"], // Anger/vexation
+        confusables: ["כסה√", "כחשׁ√", "כמס√", "קצף√", "רעשׁ√", "רעץ√", "רעע√", "כאב√"]
+    },
+    "כַּף": { translation: "hand, palm", easy: false },
+    "כְּפִי, לְפִי": { translation: "according to; as, so that", easy: false },
+    "כפר√": {
+        translation: "cover; atone",
+        easy: false,
+        words: ["כֹּפֶר - Ransom/bribe", "כַּפֹּרֶת - mercy seat/atonement cover", "כִּפֻּרִים - atonement (day of)"], // Ransom/bribe, mercy seat/atonement cover, atonement (day of)
+        confusables: ["ספר√", "כבד√", "קבר√", "חפר√", "שׂפר√", "ככר√", "עפר√", "גפר√"]
+    },
+    "כְּרוּב": { translation: "cherub", easy: false },
+    "כֶּרֶם": { translation: "vineyard", easy: false },
+    "כרת√": {
+        translation: "cut (off); make (a promise)",
+        easy: false, // Common root, but meanings varied
+        words: ["כָּרֵת - Cut off (punishment)", "בְּרִית - covenant (cut?)"], // Cut off (punishment), covenant (cut?)
+        confusables: ["חרת√", "כרס√", "ברא√", "פרץ√", "קצר√", "שרת√", "טרף√", "חרם√"]
+    },
+    "כֶּשֶׂב, כִּשְׂבָּה": { translation: "see כֶּבֶשׂ", easy: false }, // Meta word
+    "כשׁל√": {
+        translation: "stumble",
+        easy: false,
+        words: ["מִכְשׁוֹל - Stumbling block", "כִּשָּׁלוֹן - stumbling"], // Stumbling block, stumbling
+        confusables: ["חשׁל√", "שׁכל√", "כשל√", "שׂכל√", "נשׁל√", "גשׁם√", "חשׂך√", "כחשׁ√"]
+    },
+    "כתב√": {
+        translation: "write",
+        easy: true,
+        words: ["כְּתָב - Writing/document", "מִכְתָּב - writing/letter"], // Writing/document, writing/letter
+        confusables: ["קצב√", "כבה√", "כרת√", "חצב√", "קטר√", "שׂטם√", "כתם√", "כתת√"]
+    },
+    "כָּתֵף": { translation: "shoulder(-blade)", easy: false },
+    "לֹא": { translation: "no, not", easy: true }, // Extremely frequent
+    "לֵב, לֵבָב": { translation: "heart", easy: true },
+    "לְבַד": { translation: "alone; besides", easy: false },
+    "לבשׁ√": {
+        translation: "put on, clothe, wear",
+        easy: false,
+        words: ["לְבוּשׁ - Clothing/garment", "מַלְבּוּשׁ - clothing"], // Clothing/garment, clothing
+        confusables: ["יבשׁ√", "כבשׁ√", "לחשׁ√", "לפף√", "לכד√", "למד√", "לשׂם√", "לשה√"]
+    },
+    "לֶחֶם": { translation: "bread, food", easy: true },
+    "לחם√": {
+        translation: "fight",
+        easy: false,
+        words: ["מִלְחָמָה - War/battle", "לֶחֶם - bread (fight for?)"], // War/battle, bread (fight for?)
+        confusables: ["לחך√", "לחץ√", "רחם√", "לחשׁ√", "למד√", "לעם√", "לקק√", "שלם√"]
+    },
+    "מִלְחָמָה": { translation: "war, battle", easy: true }, // Frequent noun
+    "לַיְלָה, לַיִל": { translation: "night", easy: true },
+    "לין√": {
+        translation: "spend the night",
+        easy: false,
+        words: ["מָלוֹן - Lodging place"], // Lodging place
+        confusables: ["לון√", "בין√", "דין√", "עין√", "גיל√", "דון√", "ריב√", "שׁין√"]
+    },
+    "לכד√": {
+        translation: "seize, capture",
+        easy: false,
+        words: ["לֶכֶד - Snare", "מַלְכֹּדֶת - trap"], // Snare, trap
+        confusables: ["לקח√", "למד√", "ילד√", "נגד√", "לכך√", "לפף√", "לבשׁ√", "לקה√"]
+    },
+    "למד√": {
+        translation: "learn; teach",
+        easy: true,
+        words: ["לִמּוּד - Instruction", "תַּלְמִיד - disciple"], // Instruction, disciple
+        confusables: ["לכד√", "ילד√", "עמד√", "לעם√", "למע√", "לשה√", "לפד√", "לשׁן√"]
+    },
+    "לָמָה, לָמָּה": { translation: "why?", easy: true },
+    "לְמַעַן": { translation: "for the sake of; in order that", easy: false },
+    "לְפִי": { translation: "see כְּפִי", easy: false }, // Meta word
+    "לקח√": {
+        translation: "take",
+        easy: true, // Very common root
+        words: ["לֶקַח - Teaching/lesson", "מַלְקוֹחַ - booty/prey", "מֶלְקָחַיִם - tongs/snuffers"], // Teaching/lesson, booty/prey, tongs/snuffers
+        confusables: ["לכד√", "לחך√", "נקה√", "שקה√", "ברק√", "דלק√", "חלק√", "נשק√"]
+    },
+    "לִקְרַאת": { translation: "towards, to meet, opposite", easy: false },
+    "לָשׁוֹן": { translation: "tongue, language", easy: true },
+    "מְאֹד": { translation: "very; strength", easy: true }, // Very frequent adverb
+    "מֵאָז": { translation: "since, formerly", easy: false },
+    "מאס√": {
+        translation: "reject",
+        easy: false,
+        words: ["מָאוֹס - Refuse/rejection"], // Refuse/rejection
+        confusables: ["מאן√", "מהר√", "מרד√", "מעס√", "נוס√", "אנס√", "קמשׂ√", "רמס√"]
+    },
+    "מָגֵן": { translation: "shield", easy: false },
+    "מִדְבָּר": { translation: "wilderness, desert", easy: true },
+    "מדד√": {
+        translation: "measure",
+        easy: false,
+        words: ["מִדָּה - Measure", "מַד - measure/garment"], // Measure, measure/garment
+        confusables: ["נדד√", "דדה√", "מדה√", "עוד√", "ידע√", "דוד√", "מלט√", "מכר√"]
+    },
+    "מִדָּה": { translation: "measure", easy: false },
+    "מָה, מֶה, מַה": { translation: "what? how?", easy: true }, // Frequent interrogative
+    "מהר√": {
+        translation: "hurry",
+        easy: true,
+        words: ["מָהִיר - Quick/skilled", "מְהֵרָה - quickly"], // Quick/skilled, quickly
+        confusables: ["מרר√", "מאס√", "אמר√", "טהר√", "זהר√", "בהל√", "נמהר√", "סחר√"]
+    },
+    "מוּסָר": { translation: "correction", easy: false },
+    "מות√": {
+        translation: "die",
+        easy: true, // Common root
+        words: ["מָוֶת - Death", "מֵת - dead", "תְּמוּתָה - death"], // Death, dead, death
+        confusables: ["מוט√", "משׁ√", "מלט√", "מכר√", "סות√", "שׁית√", "שות√", "עוט√"]
+    },
+    "מָוֶת": { translation: "death", easy: true },
+    "מֵת": { translation: "dead", easy: true },
+    "מִזְרָח": { translation: "sunrise, east", easy: false },
+    "מָחָר": { translation: "tomorrow, in future", easy: false },
+    "מִי": { translation: "who?", easy: true }, // Frequent interrogative
+    "מַיִם": { translation: "water", easy: true },
+    "מכר√": {
+        translation: "sell",
+        easy: false,
+        words: ["מִמְכָּר - Something sold", "מֶכֶר - price/value"], // Something sold, price/value
+        confusables: ["מלך√", "מרד√", "סכר√", "זכר√", "נכר√", "מקר√", "בכר√", "שכר√"]
+    },
+    "מלא√": {
+        translation: "be full; fill, fulfil",
+        easy: true,
+        words: ["מָלֵא - Full", "מְלֹא - fullness", "מִלּוּאִים - setting/ordination (filling)"], // Full, fullness, setting/ordination (filling)
+        confusables: ["מלט√", "מלך√", "כלא√", "פלא√", "עלה√", "חלה√", "בלה√", "כלה√"]
+    },
+    "מָלֵא": { translation: "full", easy: true },
+    "מַלְאָךְ": { translation: "messenger, angel", easy: true },
+    "מְלָאכָה": { translation: "work", easy: false },
+    "מלט√": {
+        translation: "escape; save, deliver",
+        easy: false,
+        words: ["פָּלִיט - Fugitive", "מִפְלָט - escape/refuge"], // Fugitive, escape/refuge
+        confusables: ["מלא√", "מלך√", "מות√", "חלט√", "שלט√", "לקט√", "פלט√", "עמל√"]
+    },
+    "מלך√": {
+        translation: "reign, be king",
+        easy: true, // Very common root
+        words: ["מֶלֶךְ - King", "מַמְלָכָה - kingdom", "מַלְכוּת - kingdom"], // King, kingdom, kingdom
+        confusables: ["מלח√", "מלק√", "מלט√", "מלא√", "הלך√", "בלך√", "שלך√", "דלך√"]
+    },
+    "מֶלֶךְ": { translation: "king", easy: true }, // Very common word
+    "מַמְלָכָה": { translation: "kingdom", easy: true },
+    "מַלְכוּת": { translation: "kingdom", easy: true },
+    "מִן": { translation: "from, out of, part of, because of, than", easy: true }, // Extremely frequent
+    "מִנְחָה": { translation: "gift; offering", easy: false },
+    "מְעַט": { translation: "few; a little", easy: false },
+    "מצא√": {
+        translation: "find",
+        easy: true, // Common root
+        words: ["מִמְצָא - Finding"], // Finding
+        confusables: ["יצא√", "מצה√", "מזג√", "מעך√", "מחה√", "מזח√", "מרץ√", "קצה√"]
+    },
+    "מַצָּה": { translation: "unleavened bread", easy: false },
+    "מָקוֹם": { translation: "place", easy: true },
+    "משׁח√": {
+        translation: "anoint",
+        easy: false,
+        words: ["מָשִׁיחַ - Anointed one/Messiah", "מִשְׁחָה - anointing/anointing oil"], // Anointed one/Messiah, anointing/anointing oil
+        confusables: ["משׁך√", "משׁשׁ√", "משׁל√", "נשׂח√", "שׂמח√", "רחשׁ√", "נשׁך√", "משׁה√"]
+    },
+    "משׁל√": {
+        translation: "rule, govern",
+        easy: false,
+        words: ["מָשָׁל - Proverb/parable (related?)", "מֶמְשָׁלָה - dominion/rule"], // Proverb/parable (related?), dominion/rule
+        confusables: ["משׁח√", "משׁך√", "משׁשׁ√", "שׁאל√", "נשׁל√", "אשׁל√", "כּשׁל√", "פשׁע√"]
+    },
+    "מִשְׁפָּחָה": { translation: "(extended) family", easy: true },
+    "נָא": { translation: "now; please", easy: true }, // Frequent particle
+    "נְאֻם": { translation: "declaration of, word of", easy: false },
+    "נבא√": {
+        translation: "prophesy",
+        easy: true,
+        words: ["נָבִיא - Prophet", "נְבוּאָה - prophecy"], // Prophet, prophecy
+        confusables: ["נבע√", "נבט√", "נבל√", "בוא√", "אבה√", "גבה√", "כבה√", "רבה√"]
+    },
+    "נָבִיא": { translation: "prophet", easy: true },
+    "נבט√": {
+        translation: "look at",
+        easy: false,
+        words: ["מַבָּט - Look/expectation"], // Look/expectation
+        confusables: ["נבא√", "נבל√", "חבט√", "שׁבט√", "סבך√", "לפט√", "רבץ√", "שׁבת√"]
+    },
+    "נֶגֶב": { translation: "the dry country; south", easy: false },
+    "נֶגֶד": { translation: "opposite, before, against", easy: true },
+    "נגד√": {
+        translation: "make known, tell",
+        easy: false, // More specific
+        words: ["נָגִיד - Leader/prince (teller?)"], // Leader/prince (teller?)
+        confusables: ["נגע√", "נגשׂ√", "נגף√", "נגן√", "לכד√", "ענד√", "מגד√", "יגד√"]
+    },
+    "נגע√": {
+        translation: "touch, reach",
+        easy: false,
+        words: ["נֶגַע - Plague/blow"], // Plague/blow
+        confusables: ["נגד√", "נגשׂ√", "נגף√", "יגע√", "נשׂג√", "פגע√", "קעה√", "געה√"]
+    },
+    "נֶגַע": { translation: "plague, blow", easy: false },
+    "נגף√": {
+        translation: "strike, plague",
+        easy: false,
+        words: ["מַגֵּפָה - Plague/blow"], // Plague/blow
+        confusables: ["נגד√", "נגע√", "נגשׂ√", "נדף√", "נפץ√", "גפף√", "ענף√", "קצף√"]
+    },
+    "נגשׁ√": {
+        translation: "draw near, approach",
+        easy: true,
+        words: ["נִגַּשׁ - He approached (verb form)"], // He approached (verb form)
+        confusables: ["נגד√", "נגע√", "נגף√", "רגשׁ√", "דגשׁ√", "פגשׁ√", "בקשׁ√", "חדשׁ√"]
+    },
+    "נדח√": {
+        translation: "drive away, banish",
+        easy: false,
+        words: ["נִדָּח - Banished one", "מַדּוּחִים - seductions"], // Banished one, seductions
+        confusables: ["נדב√", "נפח√", "נצח√", "דחה√", "צלח√", "קדח√", "שׂטח√", "פתח√"]
+    },
+    "נֶדֶר, נֵדֶר": { translation: "vow, promise", easy: false },
+    "נָהָר": { translation: "river, stream", easy: true },
+    "נוח√": {
+        translation: "rest, make quiet, lay",
+        easy: true,
+        words: ["נִיחוֹחַ - Soothing odor (rest?)", "מָנוֹחַ - resting place", "מְנוּחָה - rest"], // Soothing odor (rest?), resting place, rest
+        confusables: ["נוס√", "נוע√", "נוף√", "נחה√", "נכה√", "נשׂא√", "בטח√", "סוח√"]
+    },
+    "נוס√": {
+        translation: "run away, flee",
+        easy: true,
+        words: ["מָנוֹס - Refuge/escape"], // Refuge/escape
+        confusables: ["נוח√", "נוע√", "נוף√", "סור√", "רוץ√", "נסע√", "אנס√", "כּנס√"]
+    },
+    "נַחַל": { translation: "torrent valley, wadi, river", easy: false },
+    "נחל√": {
+        translation: "inherit property",
+        easy: false,
+        words: ["נַחֲלָה - Inheritance"], // Inheritance
+        confusables: ["נחה√", "נחם√", "לחם√", "חלל√", "נשׁל√", "נצל√", "נכר√", "נצר√"]
+    },
+    "נַחֲלָה": { translation: "inheritance", easy: false },
+    "נחם√": {
+        translation: "be sorry, repent; comfort, console",
+        easy: false,
+        words: ["נִחוּם - Comfort", "תַּנְחוּם - consolation"], // Comfort, consolation
+        confusables: ["נחל√", "נחה√", "לחם√", "רחם√", "נאם√", "נשׂם√", "זעם√", "קצם√"]
+    },
+    "נְחֹשֶׁת": { translation: "copper, bronze", easy: false },
+    "נטה√": {
+        translation: "turn, stretch out, spread out",
+        easy: false,
+        words: ["מַטֶּה - Stick/tribe", "מִטָּה - bed/couch"], // Stick/tribe, bed/couch
+        confusables: ["נטע√", "נשא√", "נתן√", "שטה√", "פנה√", "חטה√", "בטה√", "קטה√"]
+    },
+    "מַטֶּה": { translation: "stick; tribe", easy: false },
+    "נטע√": {
+        translation: "plant",
+        easy: false,
+        words: ["מַטָּע - Planting/plantation"], // Planting/plantation
+        confusables: ["נטה√", "נצב√", "נטשׁ√", "נשא√", "מעט√", "פשט√", "שטח√", "קטר√"]
+    },
+    "נכה√": {
+        translation: "hit, strike",
+        easy: false, // Often appears in Hifil
+        words: ["מַכָּה - Blow/wound/plague"], // Blow/wound/plague
+        confusables: ["נקה√", "נכח√", "נכר√", "בכה√", "שׂכה√", "הכה√", "חכה√", "נחה√"]
+    },
+    "נכר√": {
+        translation: "be foreign, be unknown; recognise",
+        easy: false,
+        words: ["נֵכָר - Foreign land", "נָכְרִי - foreigner"], // Foreign land, foreigner
+        confusables: ["זכר√", "סכר√", "מכר√", "נכה√", "נקר√", "חקר√", "פקר√", "דקר√"]
+    },
+    "נֶסֶךְ, נֵסֶךְ": { translation: "libation (liquid offering)", easy: false },
+    "נסע√": {
+        translation: "travel, depart",
+        easy: false,
+        words: ["מַסָּע - Journey/stage"], // Journey/stage
+        confusables: ["נשא√", "נסה√", "יסע√", "פסע√", "רסן√", "חסם√", "נשׂג√", "סעה√"]
+    },
+    "נַעַר": { translation: "lad, youth, servant", easy: true },
+    "נַעֲרָה": { translation: "young girl, maid", easy: true },
+    "נפל√": {
+        translation: "fall",
+        easy: true,
+        words: ["מַפָּלָה - Ruin/downfall", "נֵפֶל - miscarriage/abortion"], // Ruin/downfall, miscarriage/abortion
+        confusables: ["פלה√", "פלא√", "נבל√", "נצל√", "נפץ√", "נשׁל√", "נפק√", "ספל√"]
+    },
+    "נֶפֶשׁ": { translation: "life, self, soul, mind", easy: true }, // Very common
+    "נצב√": {
+        translation: "take a stand, be stationed",
+        easy: false,
+        words: ["מַצֵּבָה - Pillar/monument", "נְצִיב - pillar/garrison/governor", "מַצָּב - station/post"], // Pillar/monument, pillar/garrison/governor, station/post
+        confusables: ["יצב√", "נצל√", "נצר√", "נשׂב√", "קצב√", "חצב√", "רצב√", "עצב√"]
+    },
+    "נצל√": {
+        translation: "save; take away",
+        easy: false,
+        words: ["הַצָּלָה - Deliverance"], // Deliverance
+        confusables: ["נשׁל√", "נזל√", "נצר√", "נצב√", "בזז√", "נפל√", "גזל√", "נבל√"]
+    },
+    "נצר√": {
+        translation: "watch, guard",
+        easy: false,
+        words: ["נֵצֶר - Branch/shoot (guarded?)", "מַצּוֹר - siege/distress"], // Branch/shoot (guarded?), siege/distress
+        confusables: ["נצל√", "נצב√", "יצר√", "עצר√", "אצר√", "זרע√", "קצר√", "שׂמר√"]
+    },
+    "נשׂא√": {
+        translation: "lift, carry",
+        easy: true, // Common root
+        words: ["מַשָּׂא - Burden/load/oracle", "נָשִׂיא - prince/leader (lifted up?)", "מַשְׂאֵת - tribute/signal"], // Burden/load/oracle, prince/leader (lifted up?), tribute/signal
+        confusables: ["נסע√", "נסה√", "ישא√", "עשׂה√", "כסה√", "נטה√", "נתן√", "נשׂג√"]
+    },
+    "נָשִׂיא": { translation: "prince, leader", easy: false },
+    "נשׂג√": {
+        translation: "overtake, reach",
+        easy: false,
+        words: ["מַשִּׂיג - Reaching/obtaining (participle)"], // Reaching/obtaining (participle)
+        confusables: ["נשׂא√", "נגע√", "נשׁך√", "ישׂג√", "נסע√", "יסף√", "שׂגב√", "שׂגה√"]
+    },
+    "נתן√": {
+        translation: "give, put, allow, make",
+        easy: true, // Extremely common root
+        words: ["מַתָּן - Gift", "מַתָּנָה - gift", "נָתִין - temple servant (given)"], // Gift, gift, temple servant (given)
+        confusables: ["נתץ√", "נתשׁ√", "נתח√", "נכה√", "נטה√", "נשׂא√", "מתן√", "תנן√"]
+    },
+    "סבב√": {
+        translation: "turn (around), surround",
+        easy: true,
+        words: ["סָבִיב - Circuit/surrounding", "מְסִבָּה - surrounding/round table"], // Circuit/surrounding, surrounding/round table
+        confusables: ["שׁוב√", "סור√", "סגר√", "ספח√", "סבל√", "סכך√", "סתר√", "שׁבת√"]
+    },
+    "סָבִיב": { translation: "circuit; surrounding", easy: true }, // Frequent
+    "סגר√": {
+        translation: "shut, close; hand over",
+        easy: false,
+        words: ["מַסְגֵּר - Prison/border", "סְגוֹר - ?? (needs verification)"], // Prison/border, ?? (needs verification)
+        confusables: ["סכר√", "סתר√", "סבב√", "שׂגר√", "זכר√", "אגר√", "דגר√", "קצר√"]
+    },
+    "סוּס, סוּסָה": { translation: "(m, f) horse", easy: true },
+    "סור√": {
+        translation: "turn aside; take away, remove",
+        easy: true,
+        words: ["סָרָה - Turning aside", "תּוּר√ - // Explore (possible connection)"], // Turning aside, // Explore (possible connection)
+        confusables: ["שׁוב√", "סבב√", "אסר√", "יסר√", "צור√", "דור√", "גור√", "שור√"]
+    },
+    "סֶלַע": { translation: "rock", easy: false },
+    "סֹלֶת": { translation: "fine wheat flour", easy: false },
+    "ספר√": {
+        translation: "write, count; tell",
+        easy: true,
+        words: ["מִסְפָּר - Number", "סֹפֵר - scribe/writer", "סֵפֶר - scroll/book"], // Number, scribe/writer, scroll/book
+        confusables: ["סתר√", "ספח√", "שׂפר√", "כפר√", "קטר√", "שׂבר√", "חפר√", "דבר√"]
+    },
+    "מִסְפָּר": { translation: "number", easy: true },
+    "סֹפֵר": { translation: "scribe, writer", easy: false },
+    "סֵפֶר": { translation: "scroll, book", easy: true },
+    "סתר√": {
+        translation: "conceal, hide",
+        easy: false,
+        words: ["סֵתֶר - Hiding place/secret", "מִסְתָּר - hiding place"], // Hiding place/secret, hiding place
+        confusables: ["ספר√", "סגר√", "סדר√", "שׂטר√", "קטר√", "סער√", "עצר√", "יתר√"]
+    },
+    "עבד√": {
+        translation: "serve, work",
+        easy: true, // Common root
+        words: ["עֶבֶד - Servant", "עֲבוֹדָה - service/work"], // Servant, service/work
+        confusables: ["אבד√", "עבר√", "עבט√", "עבת√", "עדר√", "עצר√", "רבד√", "כבד√"]
+    },
+    "עֶבֶד": { translation: "servant", easy: true }, // Very common word
+    "עֲבוֹדָה": { translation: "service, work", easy: true }, // Common word
+    "עבר√": {
+        translation: "pass, cross, transgress",
+        easy: true, // Common root
+        words: ["עֵבֶר - Side/opposite side", "עֲבוּר - for the sake of/produce", "מַעֲבָר - passage/ford"], // Side/opposite side, for the sake of/produce, passage/ford
+        confusables: ["עבד√", "עור√", "ערב√", "דבר√", "חבר√", "קבר√", "שבר√", "עטר√"]
+    },
+    "עֵבֶר": { translation: "side, opposite side", easy: true }, // Common
+    "עַד": { translation: "to, as far as, until, while; eternity, always", easy: true }, // Very frequent
+    "עוֹד": { translation: "yet, still, again", easy: true }, // Very frequent
+    "עוד√": {
+        translation: "testify",
+        easy: false,
+        words: ["עֵדוּת - Warning sign/testimony/commandment", "עֵדָה - congregation (witness?)", "עֵד - witness"], // Warning sign/testimony/commandment, congregation (witness?), witness
+        confusables: ["יעד√", "עדה√", "עור√", "עוט√", "חוד√", "מדד√", "סוד√", "קוד√"]
+    },
+    "עֵדוּת, עֵדָה": { translation: "warning sign, reminder, testimony; commandment", easy: false }, // Note: עדה (congregation) likely different root
+    "עֵד, עֵדָה": { translation: "witness", easy: false },
+    "עוֹלָם, עֹלָם": { translation: "forever, eternity, remote time", easy: true }, // Common word
+    "עָוֹן": { translation: "transgression, sin", easy: false },
+    "עוֹף": { translation: "flying creatures; birds", easy: true },
+    "עוֹר": { translation: "skin, leather", easy: false },
+    "עור√": {
+        translation: "arouse, awake; blind", // Note: Likely two separate roots spelled the same (homographs)
+        easy: false, // Multiple meanings
+        words: ["עִוֵּר - Blind"], // Blind
+        confusables: ["עיר√", "אור√", "יער√", "סור√", "צור√", "עבר√", "עוד√", "קדר√"]
+    },
+    "עֵז": { translation: "goat; goat's hair", easy: false },
+    "עֹז, עָז": { translation: "strength, power", easy: false },
+    "עזב√": {
+        translation: "leave, abandon",
+        easy: true,
+        words: ["עֲזוּבָה - Forsakenness/abandoned place"], // Forsakenness/abandoned place
+        confusables: ["עזר√", "עצב√", "עזז√", "אזב√", "חצב√", "רזב√", "אהב√", "יצב√"]
+    },
+    "עזר√": {
+        translation: "help",
+        easy: true,
+        words: ["עֵזֶר - Help/helper", "עֶזְרָה - help/assistance"], // Help/helper, help/assistance
+        confusables: ["עצר√", "עזב√", "עזר√", "אזר√", "חזר√", "גזר√", "בצר√", "יעץ√"]
+    },
+    "עַיִן": { translation: "eye; fountain", easy: true }, // Multiple meanings, but 'eye' is basic
+    "עִיר, עָרִים": { translation: "(s, pl) city", easy: true },
+    "עַל": { translation: "on, upon, against, over", easy: true }, // Extremely frequent
+    "עלה√": {
+        translation: "go up; offer up",
+        easy: true, // Very common root
+        words: ["מַעַל - Upwards/above", "עֹלָה - burnt offering", "עֶלְיוֹן - upper/Most High", "מַעֲלָה - ascent/step"], // Upwards/above, burnt offering, upper/Most High, ascent/step
+        confusables: ["ענה√", "עשה√", "גלה√", "כלה√", "חלה√", "פלה√", "עלץ√", "עלם√"]
+    },
+    "מַעַל": { translation: "upwards; above", easy: true }, // Frequent
+    "עֹלָה": { translation: "burnt offering", easy: false }, // More specific
+    "עֶלְיוֹן": { translation: "upper, Most High (G-d)", easy: true }, // Common term
+    "עִם": { translation: "with", easy: true }, // Very frequent
+    "עַם": { translation: "people, nation", easy: true }, // Very common
+    "עמד√": {
+        translation: "stand",
+        easy: true, // Common root
+        words: ["עַמּוּד - Pillar/column", "עֹמֶד - standing place/position", "מַעֲמָד - position/office"], // Pillar/column, standing place/position, position/office
+        confusables: ["עמס√", "עמל√", "עמעם√", "ענד√", "חמד√", "למד√", "צמד√", "רמד√"]
+    },
+    "עַמּוּד": { translation: "pillar, column", easy: false },
+    "עָמָל": { translation: "distress, trouble; effort", easy: false },
+    "ענה√": {
+        translation: "answer; be afflicted, oppress", // Note: Likely two separate roots spelled the same (homographs)
+        easy: false, // Multiple meanings, somewhat complex
+        words: ["עָנִי - Afflicted/poor", "עֳנִי - affliction", "מַעֲנֶה - answer/response"], // Afflicted/poor, affliction, answer/response
+        confusables: ["עלה√", "פנה√", "קנה√", "חנה√", "שנה√", "בנה√", "עון√", "ינה√"]
+    },
+    "עָנִי": { translation: "afflicted, poor", easy: false },
+    "עָנָן": { translation: "clouds", easy: true },
+    "עָפָר": { translation: "dry earth, dust", easy: false },
+    "עֵץ": { translation: "tree, wood", easy: true },
+    "עֶצֶם": { translation: "bone; self, substance", easy: false },
+    "עֶרֶב": { translation: "evening", easy: true },
+    "עֲרָבָה": { translation: "desert, plain", easy: false },
+    "עֶרְוָה": { translation: "nakedness", easy: false },
+    "ערך√": {
+        translation: "arrange, set in order",
+        easy: false,
+        words: ["מַעֲרָכָה - Row/battle line", "עֵרֶךְ - arrangement/value"], // Row/battle line, arrangement/value
+        confusables: ["ארך√", "ברך√", "דרך√", "ארג√", "חרך√", "פרך√", "כרך√", "ערב√"]
+    },
+    "עשׂה√": {
+        translation: "do, make",
+        easy: true, // Extremely common root
+        words: ["מַעֲשֶׂה - Work/deed"], // Work/deed
+        confusables: ["עשׁה√", "עשׁק√", "עשׁר√", "יצא√", "נשׂא√", "עלה√", "שׂים√", "ישׁע√"]
+    },
+    "מַעֲשֶׂה": { translation: "work", easy: true }, // Common word
+    "עֵת": { translation: "time", easy: true }, // Very common
+    "עַתָּה": { translation: "now", easy: true }, // Very common
+    "פֵּאָה": { translation: "side, corner", easy: false },
+    "פדה√": {
+        translation: "buy (off), redeem, ransom",
+        easy: false,
+        words: ["פְּדוּת - Redemption", "פִּדְיוֹן - ransom money"], // Redemption, ransom money
+        confusables: ["פלא√", "פלט√", "פרד√", "בדה√", "דמה√", "רדה√", "פגע√", "פזר√"]
+    },
+    "פֶּה": { translation: "mouth", easy: true },
+    "פֹּה, פּוֹ, פֹּא": { translation: "here", easy: true },
+    "פוץ√": {
+        translation: "scatter, disperse",
+        easy: false,
+        words: ["תְּפוּצָה - Dispersion"], // Dispersion
+        confusables: ["נוץ√", "קוץ√", "רוץ√", "פחז√", "פרץ√", "נפץ√", "פשׂה√", "פזר√"]
+    },
+    "פלא√": {
+        translation: "be extraordinary, wonderful",
+        easy: false,
+        words: ["פֶּלֶא - Wonder/miracle", "נִפְלָאוֹת - wonderful deeds"], // Wonder/miracle, wonderful deeds
+        confusables: ["פלה√", "פלט√", "מלא√", "פדה√", "פעל√", "פחל√", "נפל√", "כפל√"]
+    },
+    "פלל√": {
+        translation: "pray",
+        easy: true,
+        words: ["תְּפִלָּה - Prayer", "פָּלִיל - judge/umpire (?)"], // Prayer, judge/umpire (?)
+        confusables: ["נפל√", "פלה√", "פלא√", "חלל√", "קלל√", "עלל√", "בלל√", "מלל√"]
+    },
+    "תְּפִלָּה": { translation: "prayer", easy: true },
+    "פֶּן": { translation: "in case, for fear that", easy: false },
+    "פנה√": {
+        translation: "turn",
+        easy: true, // Common root
+        words: ["פָּנִים - Face", "לִפְנֵי - before", "פִּנָּה - corner"], // Face, before, corner
+        confusables: ["פדה√", "פלא√", "ענה√", "בנה√", "קנה√", "חנה√", "שנה√", "מנה√"]
+    },
+    "פָּנִים": { translation: "face", easy: true }, // Very common word
+    "לִפְנֵי": { translation: "before, in front of", easy: true }, // Very frequent preposition
+    "פעל√": {
+        translation: "make, do",
+        easy: false, // Similar to עשׂה but less frequent
+        words: ["פֹּעַל - Work/deed", "פְּעֻלָּה - work/reward"], // Work/deed, work/reward
+        confusables: ["פלא√", "פלה√", "פלט√", "פצע√", "פעם√", "פער√", "פעל√", "נפל√"]
+    },
+    "פַּעַם": { translation: "foot, step; time", easy: false }, // Multiple meanings
+    "פקד√": {
+        translation: "visit, count, appoint; miss; remember",
+        easy: false, // Multiple meanings
+        words: ["פְּקֻדָּה - Appointment/oversight/punishment", "פָּקִיד - officer/overseer", "מִפְקָד - census/mustering place"], // Appointment/oversight/punishment, officer/overseer, census/mustering place
+        confusables: ["פקח√", "פקר√", "פרק√", "קדשׁ√", "דקר√", "פחד√", "בקשׁ√", "שקד√"]
+    },
+    "פַּר, פָּרָה": { translation: "(m, f) young bull; cow", easy: false },
+    "פְּרִי": { translation: "fruit, offspring", easy: true },
+    "פרץ√": {
+        translation: "make a breach; burst out",
+        easy: false,
+        words: ["פֶּרֶץ - Breach/bursting forth"], // Breach/bursting forth
+        confusables: ["פרשׂ√", "פרס√", "פרק√", "פרע√", "פרר√", "ברא√", "כרת√", "רפץ√"]
+    },
+    "פרר√": {
+        translation: "break out, burst forth", // Note: Similar to פרץ, often 'break, frustrate (a covenant, plan)'
+        easy: false,
+        words: ["הֵפֵר - He broke (Hifil form)"], // He broke (Hifil form)
+        confusables: ["פרץ√", "פרשׂ√", "פרע√", "מרר√", "קרר√", "צרר√", "ברר√", "סרר√"]
+    },
+    "פָּרָשׁ": { translation: "horseman, horse", easy: false },
+    "פרשׂ√": {
+        translation: "spread out; flaunt",
+        easy: false,
+        words: ["מִפְרָשׂ - Spreading place/sail"], // Spreading place/sail
+        confusables: ["פרץ√", "פרס√", "פרשׁ√", "פרע√", "רפשׂ√", "כרסם√", "דרשׁ√", "ירשׁ√"]
+    },
+    "פֶּשַׁע": { translation: "rebellion, revolt, transgression", easy: false },
+    "פתח√": {
+        translation: "open, loosen",
+        easy: true,
+        words: ["פֶּתַח - Opening/entrance", "מִפְתָּח - opening/key", "פְּתִיחָה - opening"], // Opening/entrance, opening/key, opening
+        confusables: ["פיתה√", "פשט√", "פחז√", "בטח√", "זבח√", "טבח√", "נפח√", "שׂפח√"]
+    },
+    "פֶּתַח": { translation: "opening, entrance", easy: true },
+    "צֹאן": { translation: "flock, sheep", easy: true },
+    "צָבָא": { translation: "army", easy: true }, // Common word
+    "צַדִּיק": { translation: "righteous; fair, just", easy: true },
+    "צֶדֶק": { translation: "righteousness; what is right", easy: true },
+    "צְדָקָה": { translation: "righteousness", easy: true },
+    "צוה√": {
+        translation: "command",
+        easy: true,
+        words: ["מִצְוָה - Commandment"], // Commandment
+        confusables: ["צום√", "צוד√", "צור√", "צפה√", "קוה√", "לוה√", "חוה√", "עוה√"]
+    },
+    "מִצְוָה": { translation: "commandment", easy: true },
+    "צוּר": { translation: "(large) rock", easy: false },
+    "צֵל": { translation: "shadow, shade", easy: false },
+    "צלח√": {
+        translation: "advance, rush; succeed",
+        easy: false,
+        words: ["הַצְלָחָה - Success"], // Success
+        confusables: ["צלה√", "צלע√", "צלל√", "שלח√", "נדח√", "פלח√", "קלח√", "רצח√"]
+    },
+    "צעק√": {
+        translation: "cry out",
+        easy: false,
+        words: ["צְעָקָה - Outcry"], // Outcry
+        confusables: ["זעק√", "צחק√", "שׂחק√", "צעד√", "צער√", "צפה√", "יצק√", "קעה√"]
+    },
+    "צָפוֹן": { translation: "north", easy: false },
+    "צרר√": {
+        translation: "wrap up; be hostile toward; be distressed", // Note: Likely multiple roots spelled the same (homographs)
+        easy: false,
+        words: ["צַר - Enemy", "צָרָה - distress", "צְרוֹר - bundle/pebble"], // Enemy, distress, bundle/pebble
+        confusables: ["צור√", "שרר√", "סרר√", "מרר√", "קרר√", "פרר√", "ארר√", "חזר√"]
+    },
+    "צַר": { translation: "enemy", easy: false }, // Distinct from אויב? Yes, often more personal or immediate.
+    "צָרָה": { translation: "distress", easy: false },
+    "קבץ√": {
+        translation: "assemble, gather together",
+        easy: true,
+        words: ["קִבּוּץ - Gathering", "מִקְבָּץ - collection"], // Gathering, collection
+        confusables: ["קבר√", "קצר√", "קרב√", "קבע√", "רבץ√", "כבשׁ√", "קפץ√", "חבץ√"]
+    },
+    "קבר√": {
+        translation: "bury",
+        easy: false,
+        words: ["קֶבֶר - Grave/burial place", "קְבוּרָה - burial"], // Grave/burial place, burial
+        confusables: ["קבץ√", "כפר√", "קדר√", "קרב√", "גבר√", "חבר√", "דבר√", "עבר√"]
+    },
+    "קֶבֶר": { translation: "grave, burial place", easy: false },
+    "קֶדֶם, קֵדֶם": { translation: "in front; east; long ago", easy: false },
+    "קָדִים": { translation: "east side, east", easy: false },
+    "קדשׁ√": {
+        translation: "be holy; make holy",
+        easy: true, // Common root
+        words: ["קָדוֹשׁ - Holy", "קֹדֶשׁ - holy (place/thing)", "מִקְדָּשׁ - sanctuary", "קָדֵשׁ - temple prostitute (consecrated?)"], // Holy, holy (place/thing), sanctuary, temple prostitute (consecrated?)
+        confusables: ["חדשׁ√", "קדד√", "קדח√", "קדר√", "קדמ√", "דרשׁ√", "פקד√", "שׁקד√"]
+    },
+    "קָדוֹשׁ": { translation: "holy", easy: true },
+    "קֹדֶשׁ": { translation: "holy (place, thing), holiness", easy: true }, // Common
+    "מִקְדָּשׁ": { translation: "sanctuary, holy place", easy: true }, // Common
+    "קָהָל": { translation: "assembly, congregation", easy: true }, // Common term for Israel
+    "קוֹל": { translation: "voice, sound", easy: true }, // Common
+    "קום√": {
+        translation: "get up, rise, stand",
+        easy: true, // Very common root
+        words: ["מָקוֹם - Place (where one stands?)", "קָמָה - standing grain", "תְּקוּמָה - revival/uprising"], // Place (where one stands?), standing grain, revival/uprising
+        confusables: ["קום√", "חוּם√", "רוּם√", "שוּם√", "צוּם√", "מוּת√", "גוּם√", "כּוּן√"]
+    },
+    "קָטָן, קָטֹן": { translation: "small, unimportant, young", easy: true },
+    "קטר√": {
+        translation: "send an offering up in smoke; make smoke",
+        easy: false,
+        words: ["קְטֹרֶת - Smoke/incense", "מִקְטָר - place of incense burning"], // Smoke/incense, place of incense burning
+        confusables: ["קצר√", "קדר√", "קשר√", "סתר√", "עטר√", "כּתר√", "פטר√", "שׁטר√"]
+    },
+    "קְטֹרֶת": { translation: "smoke (of sacrifice); incense", easy: false },
+    "קִיר": { translation: "wall", easy: false },
+    "קלל√": {
+        translation: "curse; be slight, make light", // Note: Opposite meanings! Context is key.
+        easy: false, // Multiple meanings
+        words: ["קְלָלָה - Curse", "קַל - light/swift"], // Curse, light/swift
+        confusables: ["כלל√", "חלל√", "גלל√", "עלל√", "צלל√", "קהל√", "קלה√", "קלט√"]
+    },
+    "קנה√": {
+        translation: "acquire, buy",
+        easy: true,
+        words: ["מִקְנֶה - Cattle/livestock (property)", "קִנְיָן - property/possession", "קָנֶה - reed/measuring rod"], // Cattle/livestock (property), property/possession, reed/measuring rod
+        confusables: ["פנה√", "חנה√", "ענה√", "בנה√", "שנה√", "כּוּן√", "מנה√", "נכה√"]
+    },
+    "מִקְנֶה": { translation: "cattle, livestock", easy: false }, // Specific type of property
+    "קֵץ": { translation: "end; boundary", easy: false },
+    "קָצֶה": { translation: "end, border", easy: false },
+    "קצר√": {
+        translation: "be short, shorten, harvest", // Note: Likely two separate roots
+        easy: false, // Multiple meanings
+        words: ["קָצִיר - Harvest", "קֹצֶר - shortness"], // Harvest, shortness
+        confusables: ["קטר√", "קשר√", "קצב√", "עצר√", "נצר√", "בצר√", "אצר√", "קפץ√"]
+    },
+    "קרא√": {
+        translation: "call; meet; read; happen", // Note: Multiple meanings, 'call' is primary
+        easy: true, // Very common root
+        words: ["מִקְרָא - Convocation/reading", "קְרִיאָה - calling/reading", "לִקְרַאת - towards/to meet"], // Convocation/reading, calling/reading, towards/to meet
+        confusables: ["קרה√", "קרע√", "קרב√", "כרע√", "ברא√", "ירא√", "ראה√", "פרע√"]
+    },
+    "קֶרֶב; בְּקֶרֶב": { translation: "inward part; in the middle of", easy: true }, // Common preposition
+    "קרב√": {
+        translation: "draw near",
+        easy: true, // Common root
+        words: ["קָרוֹב - Near", "קְרָב - battle (coming near?)", "קָרְבָּן - offering (brought near)"], // Near, battle (coming near?), offering (brought near)
+        confusables: ["כרב√", "קרע√", "קרא√", "קבר√", "קבץ√", "ערב√", "רכב√", "שׁכב√"]
+    },
+    "קָרוֹב, קְרוֹבָה": { translation: "near", easy: true },
+    "קָרְבָּן": { translation: "offering, gift", easy: true }, // Common concept
+    "קֶרֶן": { translation: "horn", easy: false },
+    "קרע√": {
+        translation: "tear up",
+        easy: false,
+        words: ["קֶרַע - Tear/rent"], // Tear/rent
+        confusables: ["קרא√", "קרב√", "קרר√", "כרע√", "פרע√", "זרע√", "גרע√", "רעה√"]
+    },
+    "קֶשֶׁת": { translation: "bow (weapon); rainbow", easy: false }, // Multiple meanings, less frequent
+    "ראה√": {
+        translation: "see",
+        easy: true, // Very common root
+        words: ["מַרְאֶה - Sight/appearance", "רֹאֶה - seer", "רְאִי - mirror"], // Sight/appearance, seer, mirror
+        confusables: ["ירא√", "ירה√", "רעה√", "רמה√", "ראה√", "קרא√", "ברא√", "פלא√"]
+    },
+    "מַרְאֶה": { translation: "sight, appearance", easy: false },
+    "רֹאשׁ": { translation: "head", easy: true }, // Very common
+    "רֵאשִׁית": { translation: "beginning, first", easy: true },
+    "רבב√": {
+        translation: "be(come) numerous; multiply",
+        easy: true, // Root
+        words: ["רַב - Much/many", "רֹב - abundance", "רְבָבָה - myriad/ten thousand"], // Much/many, abundance, myriad/ten thousand
+        confusables: ["רבה√", "ריב√", "רעב√", "ערב√", "קרב√", "חרב√", "ברר√", "סבב√"]
+    },
+    "רַב": { translation: "much, many; captain, chief", easy: true }, // Very common adjective/noun
+    "רֹב": { translation: "abundance, multitude", easy: true },
+    "רבה√": {
+        translation: "be(come) numerous; multiply",
+        easy: true, // Root (often interchangeable with רבב)
+        words: ["אַרְבֶּה - Locust (numerous?)", "מַרְבִּית - multitude/increase", "תַּרְבִּית - increase/interest"], // Locust (numerous?), multitude/increase, increase/interest
+        confusables: ["רבב√", "רבע√", "רפה√", "רעה√", "ערב√", "קבה√", "גבה√", "שבה√"]
+    },
+    "רֶגֶל": { translation: "foot", easy: true }, // Common
+    "רדף√": {
+        translation: "pursue, chase",
+        easy: true,
+        words: ["מִרְדָּף - Pursuit", "רוֹדֵף - pursuer"], // Pursuit, pursuer
+        confusables: ["רפה√", "רפא√", "רפס√", "ירד√", "דפק√", "קרף√", "שרף√", "ערף√"]
+    },
+    "רוּחַ": { translation: "spirit, wind", easy: true }, // Very common, important concept
+    "רֵיחַ": { translation: "scent, smell", easy: false },
+    "רום√": {
+        translation: "be high, raise",
+        easy: true, // Common root
+        words: ["תְּרוּמָה - Tribute/contribution (lifted off?)", "מָרוֹם - height", "רָמָה - high place"], // Tribute/contribution (lifted off?), height, high place
+        confusables: ["רוץ√", "רוע√", "קום√", "סור√", "דור√", "אור√", "רעם√", "רמה√"]
+    },
+    "תְּרוּמָה": { translation: "tribute, contribution", easy: false },
+    "מָרוֹם": { translation: "height", easy: false },
+    "רוץ√": {
+        translation: "run away, flee", // Sometimes just 'run'
+        easy: true,
+        words: ["מְרוּצָה - Running/race"], // Running/race
+        confusables: ["רום√", "רוע√", "רעץ√", "רצח√", "נוס√", "רעה√", "פרץ√", "רץץ√"]
+    },
+    "רֹחַב": { translation: "width", easy: false },
+    "רחץ√": {
+        translation: "wash (oneself)",
+        easy: false,
+        words: ["רַחַץ - Washing", "מֶרְחָץ - bathhouse"], // Washing, bathhouse
+        confusables: ["רחק√", "רחשׁ√", "לחץ√", "רצח√", "רעם√", "רעשׁ√", "שׂחח√", "רמס√"]
+    },
+    "רחק√": {
+        translation: "be(come) far, distant",
+        easy: false,
+        words: ["רָחוֹק - Far/distant", "מֶרְחָק - distance"], // Far/distant, distance
+        confusables: ["רחץ√", "רחשׁ√", "רקב√", "ארך√", "דחק√", "שׂחק√", "ערק√", "פרק√"]
+    },
+    "רָחוֹק": { translation: "far, distant; distance", easy: false },
+    "ריב√": {
+        translation: "argue, plead (a case)",
+        easy: false,
+        words: ["רִיב - Argument/quarrel/lawsuit"], // Argument/quarrel/lawsuit
+        confusables: ["רוב√", "רבב√", "רעב√", "רעה√", "קרב√", "יריב√", "כּזב√", "ערב√"]
+    },
+    "רִיב, רִיבָה": { translation: "argument, quarrel; legal speech", easy: false },
+    "רכב√": {
+        translation: "ride",
+        easy: true,
+        words: ["רֶכֶב - Chariot/chariotry", "מֶרְכָּבָה - chariot", "רַכָּב - charioteer"], // Chariot/chariotry, chariot, charioteer
+        confusables: ["קרב√", "ערב√", "ברך√", "ארך√", "רבץ√", "רכשׁ√", "רכל√", "שכב√"]
+    },
+    "רֶכֶב": { translation: "chariot, chariotry", easy: true }, // Common word
+    "רנן√": {
+        translation: "shout (for joy), cheer",
+        easy: false,
+        words: ["רִנָּה - Ringing cry/shout of joy", "רְנָנָה - ringing cry/shout of joy"], // Ringing cry/shout of joy, ringing cry/shout of joy
+        confusables: ["רעם√", "רוע√", "אנן√", "גנן√", "דנן√", "זמר√", "עלץ√", "חנן√"]
+    },
+    "רֵעַ": { translation: "friend, companion", easy: true },
+    "רָעָב": { translation: "hunger, famine", easy: true },
+    "רעה√": {
+        translation: "feed, graze, look after (animals)", // Note: Different from רעע (be evil)
+        easy: false, // Shepherd root
+        words: ["רֹעֶה - Shepherd", "מִרְעֶה - pasture", "רֵעַ - friend/companion (related?)"], // Shepherd, pasture, friend/companion (related?)
+        confusables: ["רעע√", "ראה√", "ירא√", "רעשׁ√", "רעם√", "פרע√", "קרע√", "רצה√"]
+    },
+    "רֹעֶה": { translation: "shepherd", easy: true }, // Common noun
+    "רעע√": {
+        translation: "be wicked, evil", // Note: Different from רעה (shepherd)
+        easy: true, // Common root
+        words: ["רָע - Evil (adj)", "רַע - evil (adj)", "רָעָה - evil (n)", "רוֹעַ - evil/wickedness"], // Evil (adj), evil (adj), evil (n), evil/wickedness
+        confusables: ["רעה√", "רעשׁ√", "רעם√", "רוע√", "רצע√", "רעב√", "רעל√", "קרא√"]
+    },
+    "רָע, רַע, רָעָה": { translation: "evil", easy: true }, // Very common word
+    "רפא√": {
+        translation: "heal",
+        easy: false,
+        words: ["רְפוּאָה - Healing/medicine", "מַרְפֵּא - healing/remedy"], // Healing/medicine, healing/remedy
+        confusables: ["רפה√", "רפס√", "רפד√", "קרא√", "פרע√", "סרף√", "שרף√", "חפה√"]
+    },
+    "רצה√": {
+        translation: "be pleased with; like",
+        easy: false,
+        words: ["רָצוֹן - Pleasure/favour/will"], // Pleasure/favour/will
+        confusables: ["רצח√", "רץץ√", "רוץ√", "רעה√", "פרץ√", "קצה√", "חצה√", "עצר√"]
+    },
+    "רָצוֹן": { translation: "pleasure, favour, will", easy: false },
+    "רַק": { translation: "only", easy: true }, // Frequent particle
+    "רָשָׁע": { translation: "(s m, f) guilty; wicked (one)", easy: true },
+    "שׁאל√": {
+        translation: "ask",
+        easy: true, // Common root
+        words: ["שְׁאֵלָה - Request/question", "שְׁאוֹל - Sheol/underworld (place asked about?)"], // Request/question, Sheol/underworld (place asked about?)
+        confusables: ["שׁחל√", "שׁעל√", "שׂכל√", "כּשׁל√", "משׁל√", "סאל√", "גאל√", "נשׁל√"]
+    },
+    "שׁאר√": {
+        translation: "remain; be left over",
+        easy: false,
+        words: ["שְׁאֵרִית - Remainder", "שְׁאָר - remainder/rest"], // Remainder, remainder/rest
+        confusables: ["שׁכר√", "שׁקר√", "שׂאר√", "סער√", "שׂער√", "ישר√", "אשׁר√", "יתר√"]
+    },
+    "שְׁאֵרִית": { translation: "remainder", easy: false },
+    "שֵׁבֶט": { translation: "rod, stick; tribe", easy: false }, // Multiple meanings
+    "שׁבע√": {
+        translation: "swear, promise", // Note: Different from שׂבע (be satisfied)
+        easy: true,
+        words: ["שְׁבוּעָה - Oath"], // Oath
+        confusables: ["שׂבע√", "שׁבת√", "ישׁב√", "שׁבה√", "שׁבר√", "שׁפע√", "טבע√", "קבע√"]
+    },
+    "שׂבע√": {
+        translation: "satisfy, be satisfied", // Note: Different from שׁבע (swear)
+        easy: false,
+        words: ["שָׂבֵעַ - Satisfied", "שֹׂבַע - satiety/abundance"], // Satisfied, satiety/abundance
+        confusables: ["שׁבע√", "שׁבת√", "ישׁב√", "שׁבה√", "שׁבר√", "שׁפע√", "זבד√", "עבד√"]
+    },
+    "שׁבר√": {
+        translation: "break",
+        easy: true,
+        words: ["שֶׁבֶר - Breaking/fracture/ruin", "מִשְׁבָּר - breaking (waves)/crisis"], // Breaking/fracture/ruin, breaking (waves)/crisis
+        confusables: ["שׁכר√", "שׁפר√", "סבר√", "חבר√", "דבר√", "קבר√", "שׂבר√", "עבר√"]
+    },
+    "שׁבת√": {
+        translation: "rest, stop",
+        easy: true, // Common root
+        words: ["שַׁבָּת - Sabbath/rest", "שַׁבָּתוֹן - solemn rest", "מִשְׁבָּת - cessation"], // Sabbath/rest, solemn rest, cessation
+        confusables: ["שׁבע√", "שׂבע√", "שׁבה√", "שׁוב√", "שׁכח√", "שׁחת√", "ישׁב√", "סבב√"]
+    },
+    "שַׁבָּת": { translation: "sabbath, rest", easy: true }, // Very common word
+    "שׁדד√": {
+        translation: "devastate, lay waste",
+        easy: false,
+        words: ["שֹׁד - Destruction/devastation", "שַׁדַּי - Almighty (related?)"], // Destruction/devastation, Almighty (related?)
+        confusables: ["שׁדה√", "שׁכך√", "שׁקט√", "שׁמר√", "חדד√", "סדד√", "רדד√", "כּדד√"]
+    },
+    "שָׂדֶה": { translation: "field", easy: true },
+    "שָׁוְא": { translation: "worthlessness; in vain", easy: false },
+    "שׁוב√": {
+        translation: "turn, return",
+        easy: true, // Very common root
+        words: ["תְּשׁוּבָה - Return/repentance", "מְשׁוּבָה - turning back/apostasy"], // Return/repentance, turning back/apostasy
+        confusables: ["ישׁב√", "שׁכב√", "שׁבת√", "סבב√", "סור√", "שׂבע√", "שׁאב√", "חשׁב√"]
+    },
+    "שׁוֹפָר": { translation: "ram's horn, trumpet", easy: false },
+    "שׁוֹר": { translation: "bull, ox", easy: false },
+    "שׁחה√ )חוה√(": {
+        translation: "bow down",
+        easy: true, // Common concept
+        words: ["הִשְׁתַּחֲוָה - He bowed down (Hishtafel form)"], // He bowed down (Hishtafel form)
+        confusables: ["שׁחת√", "שׁכח√", "שׁלח√", "שׂחה√", "צחה√", "מחה√", "נחה√", "טחח√"]
+    },
+    "שׁחט√": {
+        translation: "slaughter, kill",
+        easy: false,
+        words: ["שְׁחוּטָה - Slaughtered (adj. fem.)"], // Slaughtered (adj. fem.)
+        confusables: ["שׁחת√", "שׁקט√", "שׁקל√", "שׁלח√", "שׁפט√", "חטא√", "בטח√", "רחץ√"]
+    },
+    "שׁחת√": {
+        translation: "ruin, destroy",
+        easy: false,
+        words: ["שַׁחַת - Pit/destruction", "מַשְׁחִית - destroyer/destruction"], // Pit/destruction, destroyer/destruction
+        confusables: ["שׁחט√", "שׁחה√", "שׁבת√", "שׁכח√", "חתת√", "שׁטה√", "שׁקר√", "שׁקט√"]
+    },
+    "שׂים√": {
+        translation: "put, place, make",
+        easy: true, // Very common root
+        words: ["תְּשׂוּמֶת - Deposit/pledge"], // Deposit/pledge
+        confusables: ["שׁית√", "שׁמם√", "שׁמע√", "סום√", "קום√", "צום√", "עשׂה√", "ישׂם√"]
+    },
+    "שׁיר√": {
+        translation: "sing",
+        easy: true,
+        words: ["שִׁיר - Song (m)", "שִׁירָה - song (f)"], // Song (m), song (f)
+        confusables: ["שׁור√", "שׁית√", "שׂים√", "שׁאר√", "ישר√", "שׁכר√", "שׁמר√", "סור√"]
+    },
+    "שִׁיר, שִׁירָה": { translation: "(m, f) song", easy: true },
+    "שׁית√": {
+        translation: "put, place", // Very similar to שׂים
+        easy: true, // Similar to שׂים
+        words: ["שַׁיִת - Garment (?) Thornbushes (?) - relationship debated"], // Garment (?) Thornbushes (?) - relationship debated
+        confusables: ["שׂים√", "שׁיר√", "שׁבת√", "שׁתה√", "שׁטה√", "שׁוט√", "מות√", "סות√"]
+    },
+    "שׁכב√": {
+        translation: "lie down, sleep",
+        easy: true,
+        words: ["מִשְׁכָּב - Bed/couch/lying down"], // Bed/couch/lying down
+        confusables: ["שׁכח√", "שׁכן√", "שׁבע√", "שׁבר√", "שׁוב√", "רכב√", "שׂכב√", "כּבשׁ√"]
+    },
+    "שׁכח√": {
+        translation: "forget",
+        easy: true,
+        words: ["שִׁכְחָה - Forgetfulness"], // Forgetfulness
+        confusables: ["שׁכב√", "שׁכן√", "שׁכך√", "שׁחה√", "שׂכל√", "יכח√", "לחך√", "שׂחק√"]
+    },
+    "שׂכל√": {
+        translation: "have success; understand",
+        easy: false, // Multiple meanings
+        words: ["שֵׂכֶל - Prudence/insight", "מַשְׂכִּיל - prudent/skillful (participle)"], // Prudence/insight, prudent/skillful (participle)
+        confusables: ["שׁכל√", "שׁכח√", "כּשׁל√", "שׁאל√", "סכל√", "שׁקל√", "שׁפל√", "אכל√"]
+    },
+    "שְׁכֶם": { translation: "shoulder", easy: false },
+    "שׁכם√": {
+        translation: "rise early",
+        easy: false,
+        words: ["שְׁכֶם - Shoulder (place where burden is loaded early?)"], // Shoulder (place where burden is loaded early?)
+        confusables: ["שׁכן√", "שׁכח√", "שׁכב√", "חכם√", "שׂכם√", "סכם√", "לקם√", "נשׂם√"]
+    },
+    "שׁכן√": {
+        translation: "live, settle",
+        easy: true, // Common root
+        words: ["מִשְׁכָּן - Dwelling/tabernacle", "שָׁכֵן - neighbor"], // Dwelling/tabernacle, neighbor
+        confusables: ["שׁכב√", "שׁכח√", "שׁכם√", "שׁכך√", "כּוּן√", "שׂכן√", "סכן√", "לחן√"]
+    },
+    "מִשְׁכָּן": { translation: "dwelling, tabernacle", easy: true }, // Common word
+    "שׁלח√": {
+        translation: "send, stretch out, let go",
+        easy: true, // Very common root
+        words: ["שֻׁלְחָן - Table (sent out?)", "מִשְׁלַחַת - delegation/mission", "שֶׁלַח - missile/weapon"], // Table (sent out?), delegation/mission, missile/weapon
+        confusables: ["שלך√", "שׁלה√", "שׁחט√", "שׁפט√", "צלח√", "פלח√", "קלח√", "בלח√"]
+    },
+    "שֻׁלְחָן": { translation: "table", easy: true },
+    "שלך√": {
+        translation: "throw",
+        easy: true,
+        words: ["הִשְׁלִיךְ - He threw (Hifil form)"], // He threw (Hifil form)
+        confusables: ["שׁלח√", "שׁלה√", "מלך√", "הלך√", "חלך√", "בלך√", "סלך√", "לקח√"]
+    },
+    "שָׁלָל": { translation: "plunder, booty", easy: false },
+    "שׁלם√": {
+        translation: "be whole, complete; repay; make peace",
+        easy: true, // Common root
+        words: ["שֶׁלֶם - Final/peace offering", "שְׁלָמִים - peace offerings", "שָׁלוֹם - peace/health", "שִׁלּוּם - recompense"], // Final/peace offering, peace offerings, peace/health, recompense
+        confusables: ["שׁלה√", "שׁלח√", "שׁלך√", "עלם√", "כלם√", "חלם√", "בלם√", "לחם√"]
+    },
+    "שֶׁלֶם, שְׁלָמִים": { translation: "final or peace offering", easy: false }, // Specific
+    "שָׁלוֹם": { translation: "peace, health", easy: true }, // Very common word
+    "שֵׁם": { translation: "name", easy: true }, // Very common word
+    "שָׁם": { translation: "there", easy: true }, // Very common adverb
+    "שְׂמֹאל": { translation: "left; left hand; north", easy: false },
+    "שׁמד√": {
+        translation: "be destroyed; destroy",
+        easy: false,
+        words: ["הִשְׁמִיד - He destroyed (Hifil form)"], // He destroyed (Hifil form)
+        confusables: ["שׁמם√", "עמד√", "סמך√", "צמד√", "למד√", "חמד√", "שׁמר√", "דמה√"]
+    },
+    "שׂמח√": {
+        translation: "be happy",
+        easy: true,
+        words: ["שִׂמְחָה - Joy/rejoicing"], // Joy/rejoicing
+        confusables: ["צמח√", "שׁמם√", "שׁבח√", "זמח√", "פתח√", "שׂנא√", "משׂח√", "שׂרף√"]
+    },
+    "שִׂמְחָה": { translation: "joy, rejoicing", easy: true },
+    "שָׁמַיִם": { translation: "heavens, sky", easy: true }, // Very common
+    "שׁמם√": {
+        translation: "be astonished; be desolate",
+        easy: false, // Multiple meanings
+        words: ["שְׁמָמָה - Horror/desolation", "מְשַׁמָּה - desolation/horror"], // Horror/desolation, desolation/horror
+        confusables: ["שׁמד√", "שׁמע√", "שׂמח√", "שׂם√", "דמם√", "חםם√", "זמם√", "סמם√"]
+    },
+    "שְׁמָמָה": { translation: "horror, desolation", easy: false },
+    "שֶׁמֶן": { translation: "oil", easy: false },
+    "שׁמע√": {
+        translation: "hear, listen, obey",
+        easy: true, // Very common root, important concept
+        words: ["שֵׁמַע - Report/hearing", "שְׁמוּעָה - report/news", "מִשְׁמַעַת - obedience/guard"], // Report/hearing, report/news, obedience/guard
+        confusables: ["שׁמם√", "שׁבע√", "שׁמה√", "ישׁע√", "שׂמח√", "סמך√", "זמע√", "גמע√"]
+    },
+    "שׁמר√": {
+        translation: "keep, guard",
+        easy: true, // Very common root
+        words: ["מִשְׁמֶרֶת - Guard/obligation/service", "מִשְׁמָר - guard/watch/prison"], // Guard/obligation/service, guard/watch/prison
+        confusables: ["שׁכר√", "שׁבר√", "שׁאר√", "אמר√", "זמר√", "סמר√", "נצר√", "שׁמד√"]
+    },
+    "מִשְׁמֶרֶת": { translation: "guard, obligation, service", easy: false },
+    "שֶׁמֶשׁ": { translation: "sun", easy: true },
+    "שֵׁן": { translation: "tooth; cliff", easy: false },
+    "שׂנא√": {
+        translation: "hate",
+        easy: false,
+        words: ["שִׂנְאָה - Hatred", "שׂוֹנֵא - enemy/hater (participle)"], // Hatred, enemy/hater (participle)
+        confusables: ["שנה√", "שׁנה√", "שׂגה√", "שׂבע√", "שׂפה√", "שׂחק√", "שׂמח√", "נשׂא√"]
+    },
+    "שָׁנָה": { translation: "year", easy: true }, // Common word
+    "שָׂעִיר": { translation: "he-goat; hairy", easy: false },
+    "שַׁעַר": { translation: "gate", easy: true },
+    "שָׂפָה": { translation: "lip; shore", easy: true }, // Multiple meanings, 'lip' is basic
+    "שִׁפְחָה": { translation: "female slave, maidservant", easy: false },
+    "שׁפט√": {
+        translation: "judge",
+        easy: true, // Common root
+        words: ["מִשְׁפָּט - Judgement/custom/justice", "שֹׁפֵט - judge", "שְׁפָטִים - judgements"], // Judgement/custom/justice, judge, judgements
+        confusables: ["שׁפך√", "שׁפל√", "שׁבת√", "שׁקט√", "שׂפח√", "חפט√", "שׂפת√", "רפט√"]
+    },
+    "מִשְׁפָּט": { translation: "judgement, custom, justice", easy: true }, // Very common word
+    "שֹׁפֵט": { translation: "judge", easy: true }, // Common word
+    "שׁפך√": {
+        translation: "pour out",
+        easy: false,
+        words: ["שֶׁפֶךְ - Pouring out place"], // Pouring out place
+        confusables: ["שׁפט√", "שׁפל√", "שׁפק√", "הפך√", "שׂפח√", "דפך√", "ספך√", "צפח√"]
+    },
+    "שׁקה√": {
+        translation: "give to drink",
+        easy: false,
+        words: ["מַשְׁקֶה - Drink/cupbearer"], // Drink/cupbearer
+        confusables: ["שׂקה√", "שׁכח√", "שׁקט√", "לקח√", "קשה√", "נשׂק√", "חשׁק√", "בקשׁ√"]
+    },
+    "שֶׁקֶל": { translation: "shekel (unit of weight)", easy: false },
+    "שֶׁקֶר": { translation: "lie, falsehood", easy: true },
+    "שַׂר": { translation: "leader, prince", easy: true }, // Common word
+    "שׂרף√": {
+        translation: "burn",
+        easy: false,
+        words: ["שָׂרָף - Fiery serpent/seraph", "שְׂרֵפָה - burning"], // Fiery serpent/seraph, burning
+        confusables: ["שרת√", "סרף√", "טרף√", "רפה√", "חרף√", "כרף√", "פרע√", "ערף√"]
+    },
+    "שׁרת√": {
+        translation: "serve", // Often liturgical or high-level service
+        easy: false, // Less common than עבד√
+        words: ["מְשָׁרֵת - Minister/servant (participle)"], // Minister/servant (participle)
+        confusables: ["שׂרף√", "שׁאר√", "שׁטר√", "כרת√", "שרץ√", "שׂרט√", "סתר√", "פרת√"]
+    },
+    "שׁתה√": {
+        translation: "drink",
+        easy: true,
+        words: ["מִשְׁתֶּה - Feast/banquet (with drinking)"], // Feast/banquet (with drinking)
+        confusables: ["שׁית√", "שׁטה√", "שׁתה√", "שׁדה√", "שׁחת√", "חָטָא√", "עשׂה√", "שׁבה√"]
+    },
+    "תָּוֶךְ; בְּתוֹךְ": { translation: "middle; in the middle of, through", easy: true }, // Handled by בתוך already marked easy
+    "תּוֹעֵבָה": { translation: "abomination", easy: false },
+    "תַּחַת": { translation: "beneath, under, instead of", easy: true }, // Frequent preposition
+    "תָּמִיד": { translation: "regularly, always; continuance", easy: false },
+    "תמם√": {
+        translation: "be complete, finish",
+        easy: false,
+        words: ["תָּמִים - Whole/blameless", "תֹּם - integrity/completeness", "תֻּמָּה - integrity"], // Whole/blameless, integrity/completeness, integrity
+        confusables: ["תמה√", "תמך√", "אמן√", "שׁמם√", "דמם√", "חםם√", "תמם√", "טמא√"]
+    },
+    "תָּמִים": { translation: "whole, blameless", easy: false },
+    "תִפְאֶרֶת": { translation: "glory, decoration", easy: false },
+    "תפשׂ√": {
+        translation: "seize, take hold of",
+        easy: false,
+        words: ["תֹּפֵשׂ - Seizing/handling (participle)"], // Seizing/handling (participle)
+        confusables: ["תפס√", "רפשׂ√", "חפשׂ√", "פרשׂ√", "קפץ√", "תקף√", "נפץ√", "תקע√"]
+    },
+    "תקע√": {
+        translation: "drive, thrust; strike; pitch; blow",
+        easy: false,
+        words: ["תֵּקַע - Sounding (of trumpet)"], // Sounding (of trumpet)
+        confusables: ["תקף√", "תקן√", "דקר√", "בקע√", "לקח√", "נקה√", "נקע√", "רקע√"]
+    }
+};
+
+// Example of accessing the new properties for a root:
+// console.log(vocab["אבד√"].words);
+// console.log(vocab["אבד√"].confusables);
+// console.log(JSON.stringify(vocab, null, 2)); // For pretty printing the whole object
+
+        // Rating system: 0-100
+        const DEFAULT_RATING = 50;
+        let wordData = {}; // Stores rating and history for each word/root
+        const HISTORY_SIZE = 5;
+        const ALL_WORDS = Object.keys(vocab); // All keys (words and roots)
+
+        let eligibleEntries = []; // Keys (words or roots) currently eligible based on filter
+        let wordsNotYetAsked = []; // Initial batch (often default-rated)
+        let initialPhaseComplete = false;
+
+        let currentDisplayedWord = null; // The word/derivative shown in the question area
+        let correctAnswer = null; // Can be translation string OR correct root string
+        let currentWordKey = null; // The key from vocab being tested (word OR root)
+        let currentQuestionType = 'translate'; // 'translate' or 'root'
+        let score = 0;
+        let quizActive = true;
+
+        // Settings
+        let includeEasyWords = true;
+
+        // Timer variables
+        const QUESTION_DURATION = 10;
+        let timerInterval = null;
+        let timeLeft = QUESTION_DURATION;
+        let timerStartTime = null;
+        let timeTaken = 0;
+
+        // Local Storage Keys
+        const LOCAL_STORAGE_DATA_KEY = 'hebrewVocabQuizData_v2'; // Added v2 to avoid conflicts if old data exists
+        const LOCAL_STORAGE_SETTINGS_KEY = 'hebrewVocabQuizSettings_v2';
+
+        // DOM Elements
+        const questionWordElement = document.getElementById('question-word');
+        const answerOptionsElement = document.getElementById('answer-options');
+        const scoreElement = document.getElementById('score');
+        const nextButton = document.getElementById('next-button');
+        const wordRatingsElement = document.getElementById('word-ratings');
+        const sortBySelect = document.getElementById('sort-by');
+        const timerBar = document.getElementById('timer-bar');
+        const copySaveButton = document.getElementById('copy-save-button');
+        const loadSaveButton = document.getElementById('load-save-button');
+        const includeEasyWordsCheckbox = document.getElementById('include-easy-words');
+        const questionArea = document.getElementById('question-area'); // Get the container
+
+
+        // --- Utility: Fisher-Yates Shuffle ---
+        function shuffleArray(array) {
+            let currentIndex = array.length, randomIndex;
+            while (currentIndex !== 0) {
+                randomIndex = Math.floor(Math.random() * currentIndex);
+                currentIndex--;
+                [array[currentIndex], array[randomIndex]] = [array[randomIndex], array[currentIndex]];
+            }
+            return array;
+        }
+
+        // --- Local Storage & Data Handling ---
+        function saveData() {
+            try {
+                const jsonData = JSON.stringify(wordData);
+                const encodedJson = encodeURIComponent(jsonData);
+                const base64Data = btoa(encodedJson);
+                localStorage.setItem(LOCAL_STORAGE_DATA_KEY, base64Data);
+                saveSettings(); // Save settings alongside data
+                console.log("Data and settings saved.");
+                return base64Data;
+            } catch (error) {
+                console.error("Error saving data:", error);
+                alert("Error saving data!");
+                return null;
+            }
+        }
+
+        function loadData(base64Data = null) {
+            let dataToLoad = base64Data;
+            let loadingFromProvidedString = base64Data !== null;
+            try {
+                if (!dataToLoad) {
+                    dataToLoad = localStorage.getItem(LOCAL_STORAGE_DATA_KEY);
+                    if (!dataToLoad) {
+                        console.log("No data found. Initializing word data.");
+                        wordData = {};
+                        ALL_WORDS.forEach(key => {
+                             if (vocab[key]) { // Ensure key exists in current vocab
+                                wordData[key] = { rating: DEFAULT_RATING, history: [] };
+                             }
+                        });
+                        resetQuizState(false);
+                        return;
+                    }
+                    console.log("Loading data from local storage.");
+                } else {
+                    console.log("Loading data from provided string.");
+                }
+
+                const encodedJson = atob(dataToLoad);
+                const jsonData = decodeURIComponent(encodedJson);
+                const loadedData = JSON.parse(jsonData);
+                const mergedWordData = {};
+                let wordsAdded = 0;
+
+                ALL_WORDS.forEach(key => {
+                    if (vocab[key]) { // Process only keys present in the current vocab
+                        if (loadedData && loadedData[key]) {
+                            const loadedHistory = Array.isArray(loadedData[key].history) ? loadedData[key].history : [];
+                            const loadedRating = typeof loadedData[key].rating === 'number' ?
+                                Math.max(0, Math.min(100, loadedData[key].rating)) : DEFAULT_RATING;
+                            mergedWordData[key] = {
+                                rating: loadedRating,
+                                history: loadedHistory.slice(-HISTORY_SIZE)
+                            };
+                        } else {
+                            mergedWordData[key] = { rating: DEFAULT_RATING, history: [] };
+                            if (loadedData && !loadedData[key]) wordsAdded++;
+                        }
+                    }
+                });
+
+                wordData = mergedWordData;
+                console.log(`Data loaded. ${Object.keys(wordData).length - wordsAdded} from save, ${wordsAdded} new entries.`);
+                if (loadingFromProvidedString) alert("Save data loaded successfully!");
+
+            } catch (error) {
+                console.error("Error loading data:", error);
+                alert("Error loading save data! Check input string or clear local storage if needed.");
+                wordData = {};
+                 ALL_WORDS.forEach(key => {
+                     if (vocab[key]) {
+                         wordData[key] = { rating: DEFAULT_RATING, history: [] };
+                     }
+                 });
+            }
+            resetQuizState(loadingFromProvidedString);
+        }
+
+        function saveSettings() {
+             try {
+                 const settings = { includeEasyWords: includeEasyWords };
+                 const jsonSettings = JSON.stringify(settings);
+                 const encodedSettings = encodeURIComponent(jsonSettings);
+                 const base64Settings = btoa(encodedSettings);
+                 localStorage.setItem(LOCAL_STORAGE_SETTINGS_KEY, base64Settings);
+                 // console.log("Settings saved."); // Less verbose
+             } catch (error) {
+                 console.error("Error saving settings:", error);
+             }
+         }
+
+         function loadSettings() {
+             try {
+                 const base64Settings = localStorage.getItem(LOCAL_STORAGE_SETTINGS_KEY);
+                 if (base64Settings) {
+                     const encodedSettings = atob(base64Settings);
+                     const jsonSettings = decodeURIComponent(encodedSettings);
+                     const loadedSettings = JSON.parse(jsonSettings);
+                     includeEasyWords = loadedSettings.includeEasyWords !== undefined ? loadedSettings.includeEasyWords : true;
+                     // console.log("Settings loaded."); // Less verbose
+                 } else {
+                     includeEasyWords = true; // Default
+                 }
+                 includeEasyWordsCheckbox.checked = includeEasyWords;
+             } catch (error) {
+                 console.error("Error loading settings:", error);
+                 includeEasyWords = true;
+                 includeEasyWordsCheckbox.checked = includeEasyWords;
+             }
+         }
+
+        // --- Eligibility and State Reset ---
+
+        function updateEligibleEntries() {
+            eligibleEntries = ALL_WORDS.filter(key => {
+                const entry = vocab[key];
+                // Entry must exist and match the 'easy' filter
+                return entry && (includeEasyWords || !entry.easy);
+            });
+            // console.log(`Eligible entries updated. Total: ${eligibleEntries.length}`); // Less verbose
+        }
+
+        function resetQuizState(isLoadFromString = false) {
+             score = 0;
+             scoreElement.textContent = score;
+             updateEligibleEntries(); // Update based on current filters
+
+             if (isLoadFromString) {
+                 wordsNotYetAsked = shuffleArray([...eligibleEntries]);
+                 initialPhaseComplete = wordsNotYetAsked.length === 0;
+             } else {
+                 wordsNotYetAsked = shuffleArray(eligibleEntries.filter(key =>
+                     wordData.hasOwnProperty(key) && wordData[key].rating === DEFAULT_RATING
+                 ));
+                 initialPhaseComplete = wordsNotYetAsked.length === 0;
+             }
+
+             renderWordRatings();
+             nextQuestion(); // Start a new question after reset
+             stopTimer();
+        }
+
+        // --- Initialization ---
+        function initializeQuiz() {
+            loadSettings();
+            loadData(null); // Load word data (will call resetQuizState)
+            window.addEventListener('beforeunload', saveData); // Save on exit
+        }
+
+        // --- Timer Logic ---
+        function startTimer() {
+            timeLeft = QUESTION_DURATION;
+            timerBar.style.width = '100%';
+            timerBar.style.backgroundColor = '#2ecc71';
+            timerStartTime = Date.now();
+            timeTaken = 0;
+            if (timerInterval !== null) clearInterval(timerInterval);
+            timerInterval = setInterval(() => {
+                const elapsedTime = (Date.now() - timerStartTime) / 1000;
+                timeLeft = Math.max(0, QUESTION_DURATION - elapsedTime);
+                const percentageLeft = (timeLeft / QUESTION_DURATION) * 100;
+                if (quizActive) {
+                    timerBar.style.width = percentageLeft + '%';
+                    timerBar.style.backgroundColor = getTimerColor(percentageLeft);
+                }
+                if (timeLeft <= 0 && quizActive) {
+                    clearInterval(timerInterval);
+                    handleAnswer(null); // Timeout
+                }
+            }, 50);
+        }
+
+        function stopTimer() {
+            if (timerInterval !== null) {
+                clearInterval(timerInterval);
+                timerInterval = null;
+            }
+        }
+
+        function getTimerColor(percentage) {
+            percentage = Math.max(0, Math.min(100, percentage));
+            let r, g, b = 0;
+            if (percentage > 50) {
+                 const progress = (percentage - 50) / 50;
+                 r = 255 * (1 - progress);
+                 g = 255;
+            } else {
+                 const progress = percentage / 50;
+                 r = 255;
+                 g = 255 * progress;
+            }
+            r = Math.max(0, Math.min(255, r));
+            g = Math.max(0, Math.min(255, g));
+            return `rgb(${Math.round(r)}, ${Math.round(g)}, ${Math.round(b)})`;
+        }
+
+        // --- Core Quiz Logic ---
+
+        // Helper to find roots suitable for the "identify root" question
+        function findValidRootsForQuestion() {
+            return eligibleEntries.filter(key => {
+                const entry = vocab[key];
+                return key.includes('√') && // Must be a root
+                       entry &&
+                       Array.isArray(entry.words) && entry.words.length > 0 && // Must have derivative words
+                       Array.isArray(entry.confusables) && entry.confusables.length >= 3; // Must have enough confusables
+            });
+        }
+
+        function nextQuestion() {
+            stopTimer();
+            quizActive = true;
+            nextButton.style.display = 'none';
+            questionWordElement.textContent = '';
+            answerOptionsElement.innerHTML = '';
+
+            // Remove previous question prompt if it exists
+            const existingPrompt = questionArea.querySelector('.question-prompt');
+            if (existingPrompt) {
+                questionArea.removeChild(existingPrompt);
+            }
+
+
+            const validRoots = findValidRootsForQuestion();
+            const canAskRootQuestion = validRoots.length > 0;
+            const questionTypeRoll = Math.random();
+            const askRootProbability = 0.25; // ~25% chance to ask a root question if possible
+
+            // Decide question type
+            if (canAskRootQuestion && questionTypeRoll < askRootProbability) {
+                 currentQuestionType = 'root';
+                 generateRootQuestion(validRoots);
+            } else {
+                 currentQuestionType = 'translate';
+                 generateTranslationQuestion();
+            }
+
+            if (currentWordKey) { // Only start timer if a question was successfully generated
+                startTimer();
+            } else {
+                 // Handle no question available state (already done inside generation functions)
+                 stopTimer();
+            }
+        }
+
+        // Selects the next key (word or root) to test
+        function selectNextEntryKey() {
+             let selectedKey = null;
+             if (wordsNotYetAsked.length > 0) {
+                 selectedKey = wordsNotYetAsked.pop();
+                 if (wordsNotYetAsked.length === 0) {
+                     initialPhaseComplete = true;
+                     // console.log("Initial phase complete."); // Less verbose
+                 }
+             } else {
+                 initialPhaseComplete = true; // Ensure flag is set
+                 // Select based on lowest rating from eligible entries
+                 const entriesWithRatings = eligibleEntries
+                     .filter(key => wordData.hasOwnProperty(key))
+                     .map(key => [key, wordData[key]]);
+
+                 if (entriesWithRatings.length === 0) return null;
+
+                 entriesWithRatings.sort(([keyA, dataA], [keyB, dataB]) => dataA.rating - dataB.rating);
+                 const numWorst = Math.ceil(entriesWithRatings.length * 0.1);
+                 const choices = entriesWithRatings.slice(0, Math.max(1, numWorst));
+                 selectedKey = choices[Math.floor(Math.random() * choices.length)][0];
+             }
+
+            // Final check: Ensure the selected key is still valid in vocab and eligible
+             if (!selectedKey || !vocab[selectedKey] || !eligibleEntries.includes(selectedKey)) {
+                 // This might happen if filters changed or vocab updated drastically
+                 console.warn("Selected key no longer valid or eligible:", selectedKey);
+                 // Try to find *any* eligible word as a fallback
+                 const fallback = eligibleEntries.find(key => vocab[key] && wordData[key]);
+                 return fallback || null;
+             }
+             return selectedKey;
+        }
+
+
+        function generateTranslationQuestion() {
+            currentWordKey = selectNextEntryKey(); // This selects the Hebrew word/root key
+
+             // Check if the key is for a root; translation questions should ideally be on non-roots
+             // or have a clear primary translation if they are roots.
+             // If we selected a root, maybe try selecting again for a non-root word?
+             // For now, we'll allow translating root concepts too.
+             if (!currentWordKey || !vocab[currentWordKey]) {
+                 // console.warn("No eligible words available for translation question."); // Less verbose
+                 questionWordElement.textContent = "Quiz Complete / No Eligible Words!";
+                 currentWordKey = null;
+                 correctAnswer = null;
+                 currentDisplayedWord = null;
+                 return; // Stop generation
+             }
+
+            correctAnswer = vocab[currentWordKey].translation; // The English translation string
+            currentDisplayedWord = currentWordKey; // The Hebrew word/root itself is displayed
+            questionWordElement.textContent = currentDisplayedWord;
+
+            // Get distractors (translations from the entire vocab)
+            const allTranslations = Object.values(vocab).map(item => item.translation).filter(t => t !== correctAnswer);
+            const shuffledDistractors = shuffleArray(allTranslations);
+            const options = new Set([correctAnswer]);
+            let added = 0;
+            for (const distractor of shuffledDistractors) {
+                if (options.size < 4) {
+                    options.add(distractor);
+                } else {
+                    break;
+                }
+            }
+            while (options.size < 4) options.add(`(Dummy ${options.size})`); // Fallback
+
+            const shuffledChoices = shuffleArray(Array.from(options));
+
+            // Render buttons
+            shuffledChoices.forEach((choice, index) => {
+                const button = document.createElement('button');
+                button.classList.add('answer-button');
+                button.textContent = `${index + 1}. ${choice}`;
+                button.dataset.translation = choice; // Store the translation string
+                button.addEventListener('click', handleAnswer);
+                answerOptionsElement.appendChild(button);
+            });
+        }
+
+        function generateRootQuestion(validRoots) {
+            // Select a root to test from the pre-filtered list
+            // For now, pick randomly from the valid roots. Could integrate rating later.
+            const correctRoot = validRoots[Math.floor(Math.random() * validRoots.length)];
+            currentWordKey = correctRoot; // The key being tested is the root itself
+
+            if (!correctRoot || !vocab[correctRoot] || !vocab[correctRoot].words || vocab[correctRoot].words.length === 0) {
+                 console.error("Invalid state in generateRootQuestion - no valid root or words found.");
+                 // Fallback to translation question
+                 currentQuestionType = 'translate';
+                 generateTranslationQuestion();
+                 return;
+            }
+
+            // Pick a random derivative word to display
+            const derivativeWords = vocab[correctRoot].words;
+            currentDisplayedWord = derivativeWords[Math.floor(Math.random() * derivativeWords.length)];
+
+            // Set the question prompt
+            const questionPrompt = document.createElement('div');
+            questionPrompt.textContent = "What is the root of:";
+            questionPrompt.style.fontSize = '0.8em'; // Smaller prompt text
+            questionPrompt.style.marginBottom = '5px';
+            questionPrompt.classList.add('question-prompt'); // Add class for potential removal
+            questionArea.insertBefore(questionPrompt, questionWordElement); // Insert before the word
+
+
+            questionWordElement.textContent = currentDisplayedWord;
+            correctAnswer = correctRoot; // The correct answer is the root string itself
+
+            // Get distractors from the confusables list of the correct root
+            const confusables = vocab[correctRoot].confusables || [];
+            const shuffledConfusables = shuffleArray([...confusables]); // Clone before shuffling
+            const distractors = shuffledConfusables.slice(0, 3); // Get 3 distractors
+
+            // Combine correct answer and distractors
+            const options = [correctAnswer, ...distractors];
+             // Ensure we have exactly 4 options (might happen if confusables < 3)
+            while(options.length < 4) options.push("???√"); // Placeholder for missing options
+
+            const shuffledOptions = shuffleArray(options);
+
+            // Render buttons
+            shuffledOptions.forEach((rootOption, index) => {
+                const button = document.createElement('button');
+                button.classList.add('answer-button');
+                button.textContent = `${index + 1}. ${rootOption}`;
+                button.dataset.answer = rootOption; // Store the root string
+                button.addEventListener('click', handleAnswer);
+                answerOptionsElement.appendChild(button);
+            });
+        }
+
+
+        function handleAnswer(event) {
+            if (!quizActive || (!currentWordKey && currentQuestionType === 'translate') || (!correctAnswer && currentQuestionType === 'root')) return;
+
+            stopTimer();
+            if (timerStartTime !== null) {
+                 timeTaken = (Date.now() - timerStartTime) / 1000;
+                 timerStartTime = null;
+            } else {
+                 timeTaken = QUESTION_DURATION;
+            }
+            quizActive = false;
+
+            const buttons = answerOptionsElement.querySelectorAll('.answer-button');
+            let isCorrect = false;
+            let keyToUpdateRating = null; // The key whose rating we'll update
+
+            if (currentQuestionType === 'translate') {
+                const selectedAnswer = event ? event.target.dataset.translation : null;
+                isCorrect = selectedAnswer === correctAnswer;
+                keyToUpdateRating = currentWordKey; // Update the word/root that was shown
+
+                buttons.forEach(button => {
+                    if (button.dataset.translation === correctAnswer) button.classList.add('correct');
+                    else if (button === event?.target) button.classList.add('incorrect');
+                    button.removeEventListener('click', handleAnswer);
+                });
+
+            } else { // currentQuestionType === 'root'
+                const selectedAnswer = event ? event.target.dataset.answer : null;
+                isCorrect = selectedAnswer === correctAnswer; // correctAnswer is the root string
+                keyToUpdateRating = correctAnswer; // Update the rating of the *ROOT*
+
+                buttons.forEach(button => {
+                    if (button.dataset.answer === correctAnswer) button.classList.add('correct');
+                    else if (button === event?.target) button.classList.add('incorrect');
+                    button.removeEventListener('click', handleAnswer);
+                });
+            }
+
+            // Update score and rating (if a key was determined)
+            updateScore(isCorrect);
+            if (keyToUpdateRating && wordData[keyToUpdateRating]) {
+                 updateWordRating(keyToUpdateRating, isCorrect, timeTaken);
+            } else if (keyToUpdateRating) {
+                 console.warn("Attempted to update rating for key not in wordData:", keyToUpdateRating);
+            }
+
+
+            nextButton.style.display = 'block';
+            nextButton.focus();
+            saveData(); // Save after handling the answer
+        }
+
+        function updateScore(isCorrect) {
+            if (isCorrect) {
+                score++;
+            }
+            scoreElement.textContent = score;
+        }
+
+        function updateWordRating(key, isCorrect, timeTaken) {
+            if (!wordData[key]) return; // Should not happen if keyToUpdateRating is checked
+
+            const data = wordData[key];
+            data.history.push(isCorrect);
+            while (data.history.length > HISTORY_SIZE) data.history.shift();
+
+            let ratingChange = 0;
+            if (isCorrect) {
+                const timeFactor = (QUESTION_DURATION - Math.min(timeTaken, QUESTION_DURATION)) / QUESTION_DURATION;
+                ratingChange = 2 + (timeFactor * 8); // Base 2 + up to 8 bonus
+            } else {
+                ratingChange = -10; // Fixed penalty
+            }
+            data.rating = Math.max(0, Math.min(100, data.rating + ratingChange));
+
+            renderWordRatings(); // Update sidebar (could optimize to update only one bar later)
+        }
+
+        // --- Sidebar Rendering ---
+        function renderWordRatings() {
+             const sortBy = sortBySelect.value;
+             // Filter wordData to include only currently eligible entries for display
+             const eligibleWordData = Object.entries(wordData)
+                 .filter(([key, data]) => eligibleEntries.includes(key)); // Filter based on eligibleEntries list
+
+            eligibleWordData.sort(([keyA, dataA], [keyB, dataB]) => {
+                 if (sortBy === 'alphabetical') return keyA.localeCompare(keyB);
+                 if (sortBy === 'rating-asc') return dataA.rating - dataB.rating;
+                 if (sortBy === 'rating-desc') return dataB.rating - dataA.rating;
+                 return 0;
+             });
+
+             wordRatingsElement.innerHTML = ''; // Clear current list
+
+             eligibleWordData.forEach(([key, data]) => { // key can be word or root
+                 const listItem = document.createElement('li');
+                 const ratingColor = getColorForRating(data.rating);
+                 const translation = vocab[key]?.translation || 'N/A'; // Get translation safely
+
+                 const wordContainer = document.createElement('div');
+                 wordContainer.classList.add('word-translation-container');
+
+                 const wordSpan = document.createElement('span');
+                 wordSpan.classList.add('word');
+                 wordSpan.textContent = key; // Display the key (word or root)
+                 wordSpan.title = translation;
+
+                 const tooltipSpan = document.createElement('span');
+                 tooltipSpan.classList.add('translation-tooltip');
+                 tooltipSpan.textContent = translation;
+
+                 wordContainer.appendChild(wordSpan);
+                 wordContainer.appendChild(tooltipSpan);
+
+                 const ratingContainer = document.createElement('div');
+                 ratingContainer.classList.add('rating-bar-container');
+                 const ratingBar = document.createElement('div');
+                 ratingBar.classList.add('rating-bar');
+                 ratingBar.style.width = `${data.rating}%`;
+                 ratingBar.style.backgroundColor = ratingColor;
+                 ratingContainer.appendChild(ratingBar);
+
+                 listItem.appendChild(wordContainer);
+                 listItem.appendChild(ratingContainer);
+                 wordRatingsElement.appendChild(listItem);
+             });
+         }
+
+        function getColorForRating(rating) {
+            const r = Math.max(0, 255 - (rating * 2.55));
+            const g = Math.max(0, (rating * 2.55));
+            return `rgb(${Math.round(r)}, ${Math.round(g)}, 0)`;
+        }
+
+        // --- Event Listeners ---
+        nextButton.addEventListener('click', nextQuestion);
+
+        document.addEventListener('keypress', (event) => {
+            const activeElement = document.activeElement;
+             if (activeElement && (activeElement.tagName === 'INPUT' || activeElement.tagName === 'TEXTAREA' || activeElement.isContentEditable)) {
+                 return;
+             }
+            if (quizActive && event.key >= '1' && event.key <= '4') {
+                const answerButtons = answerOptionsElement.querySelectorAll('.answer-button');
+                const selectedButtonIndex = parseInt(event.key) - 1;
+                if (selectedButtonIndex >= 0 && selectedButtonIndex < answerButtons.length) {
+                    answerButtons[selectedButtonIndex]?.click();
+                    event.preventDefault();
+                }
+            } else if (!quizActive && event.key === 'Enter' && nextButton.style.display !== 'none') {
+                 nextButton.click();
+                 event.preventDefault();
+            }
+        });
+
+        sortBySelect.addEventListener('change', renderWordRatings);
+
+        copySaveButton.addEventListener('click', async () => {
+             const savedData = saveData(); // Saves both data and settings, returns wordData string
+             if (savedData) {
+                 try {
+                    await navigator.clipboard.writeText(savedData);
+                    alert("Save data (word ratings) copied to clipboard!");
+                 } catch (err) {
+                    console.error('Failed to copy:', err);
+                    alert("Failed to copy save data. See console.");
+                    console.log("Your word data (copy this):", savedData);
+                 }
+             }
+        });
+
+        loadSaveButton.addEventListener('click', async () => {
+             const saveCode = prompt("Paste your save data code:");
+             if (saveCode) {
+                 loadData(saveCode.trim()); // Load word data
+                 // Settings are not loaded from this string, only from localStorage on init/refresh
+             }
+        });
+
+        includeEasyWordsCheckbox.addEventListener('change', (event) => {
+             includeEasyWords = event.target.checked;
+             saveSettings(); // Save the setting change
+             resetQuizState(false); // Reset based on filter change
+        });
+
+
+        // --- Start the Quiz ---
+        initializeQuiz();
+
+    </script>
+
+</body>
+</html>

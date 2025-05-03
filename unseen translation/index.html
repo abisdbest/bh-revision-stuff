@@ -1,0 +1,1249 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BH Unseen Translation Quiz (Gemini API)</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Arimo:ital,wght@0,400..700;1,400..700&display=swap" rel="stylesheet">
+    <style>
+        /* --- General Styles --- */
+        html, body {
+            position: absolute;
+            top: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            margin: 0;
+            background-color: #f4f7f6;
+            color: #333;
+            min-height: 100vh;
+            height: 100vh;
+            width: 100vw;
+             overflow-y: auto; /* Allow body to scroll if container content overflows */
+        }
+
+        .container {
+	    transform-origin: top;
+             transform: scale(0.6);
+
+            position: absolute;
+            top: 20px; /* Adjusted from 10px bottom */
+            left: 0;
+            right: 0;
+            margin: auto;
+
+            background-color: #fff;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 6px 15px rgba(0, 0, 0, 0.1);
+            width: 100vw;
+            max-width: 2000px;
+            box-sizing: border-box;
+
+             overflow-y: auto; /* Container scrolls internally */
+        }
+
+        h1 {
+            text-align: center;
+            color: #0056b3;
+            margin-bottom: 30px;
+            font-size: 2.5em;
+        }
+
+        button {
+            padding: 12px 25px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 1em;
+            transition: background-color 0.3s ease, transform 0.1s ease;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        /* --- Section Styles --- */
+        .section {
+            margin-bottom: 30px;
+            padding: 20px;
+            background-color: #eef2f7;
+            border-radius: 8px;
+            border-left: 5px solid #007bff;
+        }
+
+        .section h2 {
+            margin-top: 0;
+            color: #007bff;
+            font-size: 1.8em;
+            border-bottom: 2px solid #007bff;
+            padding-bottom: 10px;
+            margin-bottom: 15px;
+        }
+
+        /* --- Text Display Area --- */
+        #full-text-area {
+            margin-bottom: 30px;
+        }
+
+        #full-text {
+	    font-family: "Arimo", sans-serif;
+            font-size: 1.4em;
+            direction: rtl;
+            text-align: right;
+            line-height: 2;
+            background-color: #fff;
+            padding: 15px;
+            border-radius: 8px;
+            border: 1px solid #ddd;
+            margin-bottom: 20px; /* Add margin below text before difficult words */
+        }
+
+        /* --- Difficult Words Area (Now for the whole text) --- */
+        /* Moved this section's styles */
+        #difficult-words-area {
+            margin-top: 15px; /* Keep some top margin if needed after full text */
+            padding: 15px; /* Increased padding */
+            background-color: #fff; /* White background */
+            border-radius: 8px; /* Rounded corners */
+            border: 1px solid #ccc; /* Border */
+            display: none; /* Hidden by default, shown with JS */
+            /* Added flexbox for potential multi-column layout */
+            display: flex;
+            flex-wrap: wrap; /* Allow items to wrap */
+            gap: 10px 20px; /* Space between rows and columns */
+        }
+
+        #difficult-words-area h4 {
+            width: 100%; /* Make heading take full width */
+            margin-top: 0;
+            margin-bottom: 10px; /* Increased bottom margin */
+            color: #0056b3; /* Slightly darker blue */
+            font-size: 1.2em; /* Slightly larger font */
+            text-align: right; /* Align title right for RTL context */
+            border-bottom: 1px solid #eee; /* Separator line */
+            padding-bottom: 8px;
+        }
+
+        #difficult-words-list {
+            list-style: none; /* Remove default list style */
+            padding: 0;
+            margin: 0;
+            text-align: right; /* Align list items right */
+            display: flex; /* Use flexbox for list items */
+            flex-wrap: wrap; /* Allow items to wrap */
+            gap: 8px 15px; /* Space between words */
+            width: 100%; /* Make list take full width */
+        }
+
+        #difficult-words-list li {
+             /* Remove per-item padding and border as they are now side-by-side */
+            margin-bottom: 0;
+            padding-bottom: 0;
+            border-bottom: none;
+             /* Add slight padding to make items clickable/selectable */
+             padding: 2px 0;
+        }
+
+         #difficult-words-list li:last-child {
+             border-bottom: none;
+             margin-bottom: 0;
+             padding-bottom: 0;
+         }
+
+        #difficult-words-list li span[lang="he"] {
+	    font-family: "Arimo", sans-serif;
+            font-weight: bold;
+            margin-left: 5px; /* Space between Hebrew and English */
+        }
+
+
+        /* --- Quiz Area --- */
+        #quiz-area {
+            display: none; /* Hidden initially */
+        }
+
+        #current-phrase-container {
+            margin-bottom: 20px;
+        }
+
+        #current-phrase-text {
+	    font-family: "Arimo", sans-serif;
+            font-size: 1.6em;
+            direction: rtl;
+            text-align: right;
+            color: #333;
+            background-color: #fff;
+            padding: 15px;
+            border-radius: 8px;
+            border: 1px solid #ccc;
+            display: inline-block; /* Or block if you want it on its own line */
+        }
+
+        #phrase-location {
+            font-size: 0.9em;
+            color: #555;
+            margin-top: 10px;
+            text-align: right;
+        }
+
+         /* Difficult words area specifically for per-phrase - REMOVED FROM HERE */
+         /* #difficult-words-area (per-phrase) styles are now obsolete/moved */
+
+
+        #translation-input {
+            width: calc(100% - 24px); /* Adjust for padding */
+            padding: 12px;
+            margin-top: 15px;
+            font-size: 1.1em;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            box-sizing: border-box;
+        }
+
+        #quiz-buttons {
+            margin-top: 20px;
+            text-align: center;
+        }
+
+        #check-button {
+            background-color: #28a745;
+            color: white;
+            margin-right: 10px;
+        }
+
+        #check-button:hover {
+            background-color: #218838;
+        }
+
+        #idk-button {
+            background-color: #ffc107;
+            color: #333;
+        }
+
+        #idk-button:hover {
+            background-color: #e0a800;
+        }
+
+        /* --- Feedback Area --- */
+        #feedback-area {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 8px;
+            display: none; /* Hidden initially */
+        }
+
+        .feedback-correct {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+         .feedback-acceptable {
+            background-color: #fff3cd; /* Warning/Yellowish */
+            color: #856404;
+            border: 1px solid #ffeeba;
+         }
+
+        .feedback-incorrect {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        .feedback-show-answer {
+             background-color: #d1ecf1; /* Info/Cyan */
+             color: #0c5460;
+             border: 1px solid #bee5eb;
+        }
+
+        #feedback-message {
+            margin-bottom: 10px;
+            font-weight: bold;
+        }
+
+        #correct-translation {
+            font-style: italic;
+            margin-top: 10px;
+            border-top: 1px dashed #ccc;
+            padding-top: 10px;
+        }
+
+        #feedback-comments {
+            font-size: 0.95em;
+            margin-top: 10px;
+        }
+
+         #next-phrase-button {
+            background-color: #007bff;
+            color: white;
+            margin-top: 15px;
+            display: block; /* Takes up full width */
+            width: 100%; /* Ensure button takes full width within its container */
+        }
+
+        #next-phrase-button:hover {
+            background-color: #0056b3;
+        }
+
+
+        /* --- Loading Indicator --- */
+         .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            backdrop-filter: blur(5px);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            background-color: rgba(255, 255, 255, 0.7); /* Add semi-transparent background */
+         }
+
+        #loading-indicator {
+            text-align: center;
+            font-size: 1.2em;
+            color: #007bff;
+            display: none; /* Hidden initially */
+            flex-direction: column;
+             background-color: #fff;
+             padding: 20px 30px;
+             border-radius: 8px;
+             box-shadow: 0 3px 10px rgba(0,0,0,0.1);
+        }
+
+        .spinner {
+            border: 4px solid #f3f3f3; /* Light grey */
+            border-top: 4px solid #3498db; /* Blue */
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            animation: spin 1s linear infinite;
+            margin-bottom: 15px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+
+        /* --- End of Quiz --- */
+        #quiz-complete {
+            text-align: center;
+            font-size: 1.5em;
+            color: #28a745;
+            margin-top: 30px;
+            display: none; /* Hidden initially */
+        }
+
+        /* --- Added JS Niceties (Placeholder Styles) --- */
+        .highlight-phrase {
+            background-color: #ffff99; /* Highlight color */
+            padding: 0 2px;
+            border-radius: 3px;
+        }
+
+        .pulsing-button {
+            animation: pulse 1s infinite alternate;
+        }
+
+        @keyframes pulse {
+            0% {
+                transform: scale(1);
+            }
+            100% {
+                transform: scale(1.03); /* Slightly less aggressive pulse */
+            }
+        }
+
+        .fade-in {
+            animation: fadeIn 0.5s ease-in;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .slide-in {
+            animation: slideIn 0.5s ease-out;
+        }
+
+         @keyframes slideIn {
+            from { transform: translateY(10px); opacity: 0; } /* Less vertical slide */
+            to { transform: translateY(0); opacity: 1; }
+         }
+
+    </style>
+    <!-- Import Gemini API library -->
+    <script type="importmap">
+        { "imports": { "@google/generative-ai": "https://esm.run/@google/generative-ai" } }
+    </script>
+</head>
+<body>
+    <div id="loading-overlay" class="loading-overlay" style="display: none;">
+         <div id="loading-indicator">
+             <div class="spinner"></div>
+             <div>Loading...</div>
+         </div>
+    </div>
+
+    <div class="container">
+        <h1>BH Unseen Translation Quiz</h1>
+
+        <div id="full-text-area" class="section">
+            <h2>Source Text</h2>
+            <div id="full-text"></div>
+             <!-- Difficult words area - MOVED HERE -->
+            <div id="difficult-words-area">
+                <h4>Vocabulary for this text:</h4>
+                <ul id="difficult-words-list">
+                    <!-- Difficult words will be added here by JS -->
+                </ul>
+            </div>
+        </div>
+
+        <div id="quiz-area" class="section">
+            <h2>Translate the Phrase</h2>
+            <div id="current-phrase-container">
+                <span id="current-phrase-text"></span>
+                <div id="phrase-location"></div>
+                 <!-- Removed the difficult words area from here -->
+            </div>
+
+            <textarea id="translation-input" placeholder="Enter your translation here..."></textarea>
+
+            <div id="quiz-buttons">
+                <button id="check-button">Check Translation</button>
+                <button id="idk-button">I don't know</button>
+            </div>
+
+            <div id="feedback-area">
+                <div id="feedback-message"></div>
+                <div id="correct-translation"></div>
+                <div id="feedback-comments"></div>
+                <button id="next-phrase-button" class="fade-in">Next Phrase</button>
+            </div>
+        </div>
+
+        <div id="quiz-complete">
+            <p>🎉 Quiz Complete! 🎉</p>
+            <p>You've finished all the phrases in this section.</p>
+            <button onclick="location.reload()">Start Over</button>
+        </div>
+
+    </div>
+
+    <!-- Use type="module" because we are using import -->
+    <script type="module">
+        import { GoogleGenerativeAI, HarmCategory, HarmBlockThreshold } from "@google/generative-ai";
+
+        // !!! WARNING: EXPOSING YOUR API KEY IN CLIENT-SIDE CODE IS INSECURE !!!
+        // Use a backend server in production to handle API calls.
+        const API_KEY = "AIzaSyB3lmQJddVZA9dvJrlXPJGyD-Mg-c6PH2Y"; // <-- REPLACE WITH YOUR API KEY
+
+        const genAI = new GoogleGenerativeAI(API_KEY);
+        const model = genAI.getGenerativeModel({
+            model: "gemini-2.0-flash",
+            systemInstruction: "You are an assistant for a Hebrew Bible translation quiz. When asked to judge translation, do not be overly strict - e.g. if the user makes a typo, assume they didnt mean that - figure out what they *did* mean, and mark that (you may even be able to mark it as fully correct still). For alternate translations, and if the user has made a mistake, calmly explain, and *teach* them how to improve. When generating Sefaria references, follow all explicit instructions regarding formatting and exclusions."
+        });
+
+        // --- Safety Settings (Adjust if needed, but be cautious) ---
+        const safetySettings = [
+            { category: HarmCategory.HARM_CATEGORY_HARASSMENT, threshold: HarmBlockThreshold.BLOCK_NONE },
+            { category: HarmCategory.HARM_CATEGORY_HATE_SPEECH, threshold: HarmBlockThreshold.BLOCK_NONE },
+            { category: HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT, threshold: HarmBlockThreshold.BLOCK_NONE },
+            { category: HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT, threshold: HarmBlockThreshold.BLOCK_NONE },
+        ];
+
+        // --- DOM Elements ---
+        const fullTextDiv = document.getElementById('full-text');
+        // Get the difficult words area and list from their new location
+        const difficultWordsArea = document.getElementById('difficult-words-area');
+        const difficultWordsList = document.getElementById('difficult-words-list');
+        const currentPhraseTextSpan = document.getElementById('current-phrase-text');
+        const phraseLocationDiv = document.getElementById('phrase-location');
+        const translationInput = document.getElementById('translation-input');
+        const checkButton = document.getElementById('check-button');
+        const idkButton = document.getElementById('idk-button');
+        const feedbackArea = document.getElementById('feedback-area');
+        const feedbackMessageDiv = document.getElementById('feedback-message');
+        const correctTranslationDiv = document.getElementById('correct-translation');
+        const feedbackCommentsDiv = document.getElementById('feedback-comments');
+        const nextPhraseButton = document.getElementById('next-phrase-button');
+        const loadingOverlay = document.getElementById('loading-overlay');
+        const loadingIndicator = document.getElementById('loading-indicator');
+        const quizArea = document.getElementById('quiz-area');
+        const quizCompleteDiv = document.getElementById('quiz-complete');
+
+        // --- State Variables ---
+        let fullText = '';
+        // Phrases will now store { he: "phrase", startIndex: N, endIndex: M } - difficult_words are separate
+        let phrases = [];
+        let currentPhraseIndex = 0;
+        let currentPhraseSpan = null; // To keep track of the highlighted span
+        let lastEndIndex = 0; // To help find subsequent phrases in the full text
+
+        // New: State variable for all difficult words in the entire text
+        let allDifficultWords = []; // Array of {he: string, en: string}
+
+        // --- Local Storage Variables and Functions ---
+        const localStorageKeyCompletedRefs = 'sefariaQuizCompletedRefs';
+        let completedReferences = []; // Array to store references of completed texts
+        let currentTextReference = null; // To store the Sefaria reference of the currently loaded text
+
+        /**
+         * Loads the list of completed Sefaria references from local storage.
+         * @returns {string[]} An array of completed reference strings.
+         */
+        function loadCompletedReferences() {
+            try {
+                const storedRefs = localStorage.getItem(localStorageKeyCompletedRefs);
+                if (storedRefs) {
+                    const refs = JSON.parse(storedRefs);
+                    if (Array.isArray(refs)) {
+                        return refs;
+                    } else {
+                         console.error("Local storage item is not an array:", refs);
+                         return [];
+                    }
+                }
+            } catch (error) {
+                console.error("Error loading completed references from local storage:", error);
+            }
+            return [];
+        }
+
+        /**
+         * Saves the current list of completed references to local storage.
+         * @param {string[]} refs - The array of reference strings to save.
+         */
+        function saveCompletedReferences(refs) {
+            try {
+                localStorage.setItem(localStorageKeyCompletedRefs, JSON.stringify(refs));
+            } catch (error) {
+                console.error("Error saving completed references to local storage:", error);
+                alert("Could not save quiz history to your browser's storage.");
+            }
+        }
+
+        /**
+         * Adds a new reference to the list of completed references and saves it.
+         * Prevents adding duplicates.
+         * @param {string} ref - The Sefaria reference string to add.
+         */
+        function addCompletedReference(ref) {
+            if (!ref || typeof ref !== 'string') {
+                console.warn("Attempted to add invalid reference:", ref);
+                return;
+            }
+            if (!completedReferences.includes(ref)) {
+                completedReferences.push(ref);
+                saveCompletedReferences(completedReferences);
+            } else {
+                 console.log(`Reference "${ref}" is already in the completed list.`);
+            }
+        }
+
+        // --- Utility Functions ---
+
+        /** Shows the loading indicator */
+        function showLoading(message = 'Loading...') {
+             loadingOverlay.style.display = 'flex';
+             loadingIndicator.querySelector('div:last-child').textContent = message;
+             translationInput.disabled = true;
+             checkButton.disabled = true;
+             idkButton.disabled = true;
+             nextPhraseButton.disabled = true;
+             document.body.style.cursor = 'wait';
+        }
+
+        /** Hides the loading indicator */
+        function hideLoading() {
+             loadingOverlay.style.display = 'none';
+             translationInput.disabled = false;
+             checkButton.disabled = false;
+             idkButton.disabled = false;
+             nextPhraseButton.disabled = false;
+             document.body.style.cursor = 'default';
+        }
+
+         /**
+         * Makes a call to the Gemini API.
+         * Handles basic error logging and loading state.
+         * @param {string} prompt - The prompt to send.
+         * @param {string} loadingMessage - Message to show during loading.
+         * @returns {Promise<string|null>} The text response from Gemini, or null on error.
+         */
+        async function callGemini(prompt, loadingMessage = 'Thinking...') {
+            showLoading(loadingMessage);
+            try {
+                const result = await model.generateContent(prompt, { safetySettings });
+                const response = result.response;
+                 if (!response || !response.text()) {
+                      console.warn("Gemini response was empty or blocked.", response);
+                       const blockReason = response && response.promptFeedback && response.promptFeedback.blockReason ?
+                                              `, Block reason: ${response.promptFeedback.blockReason}` : '';
+                      alert(`Received an empty or blocked response from the AI. This might be due to safety settings or content limitations.${blockReason}`);
+                      hideLoading();
+                      return null;
+                 }
+                const text = response.text();
+                hideLoading();
+                return text;
+            } catch (error) {
+                console.error('Error calling Gemini API:', error);
+                alert('Error communicating with the translation service. Please check your API key, network connection, or prompt content.');
+                hideLoading();
+                return null;
+            }
+        }
+
+              /**
+         * Fetches a random Hebrew text from the Sefaria API.
+         * Asks Gemini for a reference, *excluding* previously completed ones.
+         * Adds the fetched reference to history *immediately* upon successful fetch.
+         * Returns a Promise that resolves with the cleaned text string.
+         */
+        async function fetchRandomText() {
+            showLoading('Choosing text reference...');
+
+            // --- Gemini call to get reference (remains the same) ---
+            let refPrompt = `Provide a single Sefaria reference from the Hebrew Bible (Tanakh) for a translation quiz.
+    Choose a section that is not excessively long (e.g., a chapter or a few verses like 'Genesis.1', 'Exodus.10', 'Psalms.23:1-5', 'Isaiah.40').
+    The entire chapter that you choose will be returned, but only the first 5 pesukim used for the quiz.
+    The level of the text should be for a jewish GCSE Y10 student - not too hard. Pick well known historic sections from tanach. should be a little challenging. (Dont just bring passages from torah, bring mostly from neviim.)`;
+
+            if (completedReferences.length > 0) {
+                 refPrompt += `\n\nCrucially, DO NOT choose any of the following references: ${completedReferences.join(', ')}.`;
+            }
+
+            refPrompt += `\nProvide ONLY the reference string, no other text or markdown.`;
+
+            const ref = await callGemini(refPrompt, 'Choosing text...');
+
+            if (!ref) {
+                 console.error("Gemini failed to provide a Sefaria reference.");
+                 fullTextDiv.innerHTML = '<p style="color: red;">Could not get a text reference from the AI. Please try again later.</p>';
+                 hideLoading();
+                 return null;
+            }
+
+            currentTextReference = ref.trim(); // Store the reference immediately
+
+            const url = `https://www.sefaria.org/api/texts/${currentTextReference}?context=0`;
+            showLoading(`Fetching text from Sefaria (${currentTextReference})...`);
+
+            try {
+                const response = await fetch(url);
+                if (!response.ok) {
+                     const errorText = await response.text();
+                    console.error(`HTTP error fetching text for ref "${currentTextReference}": ${response.status}`, errorText);
+                    throw new Error(`HTTP error fetching text for "${currentTextReference}": ${response.status}`);
+                }
+                const data = await response.json();
+
+                if (data && data.he && Array.isArray(data.he)) {
+                    let rawText = data.he.slice(0, 5).join(' '); // Limit to first 5 pesukim here
+
+                    let cleanedText = rawText
+                        .replace(/<[^>]*>/g, '')
+                        .replace(/\{.*?}/g, '')
+                        .replace(/[0-9:\.]/g, '')
+                        .replace(/׀/g, '')
+                        .replace(/ /g, '') // Thin space
+                        .replace(/־/g, ' ') // Replace maqaf with space for easier splitting? Or keep? Let's keep for now.
+                        .replace(/\s+/g, ' ')
+			.replace("&thinsp;", "")
+			.replace("&nbsp;", "")
+                        .trim();
+
+                    console.log("Cleaned Text:", cleanedText);
+
+                    // --- >>> NEW LOCATION FOR ADDING REFERENCE TO HISTORY <<< ---
+                    // Add the reference *now* since the fetch and cleaning were successful
+                    if (currentTextReference) { // Make sure we have a reference
+                         addCompletedReference(currentTextReference);
+                         console.log(`Added reference "${currentTextReference}" to history immediately after successful fetch.`);
+                         console.log("Current completed references list:", completedReferences); // Log for verification
+                    } else {
+                         console.warn("Text fetched successfully, but currentTextReference was unexpectedly empty. Not adding to history.");
+                    }
+                    // --- >>> END OF NEW LOCATION <<< ---
+
+                    hideLoading();
+                    return cleanedText; // Return the successfully cleaned text
+
+                } else {
+                    throw new Error("Invalid data format from Sefaria API for reference: " + currentTextReference);
+                }
+            } catch (error) {
+                console.error('Error fetching text:', error);
+                hideLoading();
+                fullTextDiv.innerHTML = `<p style="color: red;">Error loading text for reference "${escapeHTML(currentTextReference)}". Please try again later.</p>`;
+                currentTextReference = null; // Nullify the reference on error
+                return null; // Return null on error
+            }
+        }
+
+        /**
+         * Splits the full text into phrases using the Gemini API and identifies difficult words
+         * for the *entire text*.
+         * Stores the collected difficult words globally and returns phrase objects *without*
+         * the per-phrase difficult words property.
+         * @param {string} text - The full Hebrew text.
+         * @returns {Promise<Array<{he: string, startIndex: number, endIndex: number}>>} - Array of phrase objects.
+         */
+        async function splitIntoPhrasesWithGemini(text) {
+             // IMPORTANT: Modified prompt to ask for difficult words across the WHOLE text implicitly,
+             // and keep the phrase structure. We will extract ALL difficult words found
+             // in ANY phrase returned by Gemini.
+
+           const prompt = `Given the following Hebrew text from Tanakh, split it into logical translation units or phrases suitable for a translation quiz for a typical Jewish GCSE (Year 10) student aiming for a good grade.
+
+For each phrase, identify any Hebrew words that such a student would likely **NOT** know without assistance, requiring them to look it up or be explicitly taught for this text.
+
+When identifying these 'difficult words', apply the following criteria carefully:
+
+**Specifically EXCLUDE:**
+1.  **High-Frequency Core Vocabulary:** Words derived from the ~700-1000 most common Biblical Hebrew roots, especially when appearing in standard forms.
+2.  **Basic Grammatical Words:** Conjunctions (ו, ב, כ, ל, מ, ש as prefixes or standalone), simple relative pronouns (אֲשֶׁר), common interrogatives (מי, מה), the definite article (ה), the direct object marker (אֵת).
+3.  **Common Verbs in Simple/Standard Forms:** Roots like היה, הלך, בוא, יצא, אמר, ראה, שמע, דבר, עשה, נתן, ישב, לקח, עמד, קום, שים, עלה, ירד etc., especially in Qal (perfect, imperfect, imperative, infinitive construct/absolute, participle) and other common binyanim like Niphal, Piel, Hiphil *if the root itself is very common* AND the form is regular (e.g., exclude וַיְדַבֵּר, נִכְנְסוּ, הִגִּיד).
+4.  **Common Nouns/Adjectives/Prepositions:** Words like איש, אשה, בן, בת, אב, אם, יום, לילה, ארץ, שמים, מים, הר, עיר, בית, דרך, עם, מלך, כהן, נביא, יד, רגל, עין, אזן, פה, לב, שם, כלי, סוס, חרב, לחם, גדול, קטן, טוב, רע, רב, מעט, על, אל, תחת, בין, לפני, אחרי, את (preposition), etc. **Crucially, this exclusion INCLUDES their common morphological variations:**
+    *   Standard plural forms (e.g., אֲנָשִׁים, בָּתִּים)
+    *   Standard dual forms for body parts etc. (e.g., יָדַיִם, עֵינַיִם)
+    *   Standard construct states (singular and plural, e.g., בֵּית־, דְּבַר־, אַנְשֵׁי־)
+    *   Standard pronominal suffixes attached to nouns/prepositions (e.g., בְּבֵיתְךָ, דְּבָרָיו, לָהֶם, אֹתָם).
+    *   **Example of EXCLUDED word:** מַֽחֲנֵיהֶם֙ (their camps). **Reason:** The root מחנ (camp) is common, and the form (masculine plural noun + 3mp suffix) is entirely regular and expected knowledge for a GCSE student. Do NOT classify such words as difficult. Similarly, exclude words like דְּבָרָיו (his words) or עֲבָדֶֽיךָ (your servants).
+
+**Specifically INCLUDE (as potentially 'difficult'):**
+1.  **Less Frequent Roots:** Words derived from roots clearly outside the ~700-1000 most common ones.
+2.  **Specialized or Rare Vocabulary:** Technical terms (e.g., architectural, ritual, nautical, military details), specific names of unusual animals, plants, objects, or obscure place names.
+3.  **Difficult Forms/Roots:** Words with genuinely irregular morphology, obscure roots, hapax legomena (words appearing only once), or common roots used in very rare *binyanim* (e.g., Hithpalpel, Pulal unless the specific resulting word is common). Also include less common participial forms or infinitives from less common binyanim if the root isn't basic.
+4.  **Ambiguous or Context-Specific Meanings:** Common words used with a rare or nuanced meaning specific to the context that wouldn't be immediately obvious from the root.
+5.  **Figurative/Idiomatic Language:** Phrases where the combined meaning is non-literal and potentially obscure (consider including the whole idiomatic unit if the difficulty lies in the combination). Examples: בְּלַבַּת־אֵשׁ (in a flame of fire - 'לַבַּת' might be hard), הַסְּנֶה (the bush - specific, less common noun), יַרְכְּתֵ֣י הַסְּפִינָה (the innermost parts of the ship - 'יַרְכְּתֵי' is less common/more specific).
+
+**Constraint:** Be highly selective. Aim for **NO MORE THAN 5-7 difficult words** across the entire input text. Prioritize words that are genuinely likely to pose a challenge to a GCSE-level student who has learned the basics well. If a word seems borderline (e.g., a slightly less common noun but with regular morphology), lean towards *excluding* it. The goal is to highlight truly less common or complex items, not slightly unfamiliar ones.
+
+**Output Format:**
+Return the output as a JSON array of objects.
+1.  Each object represents one phrase.
+2.  Each object MUST have a "he" key containing the Hebrew phrase (EXACTLY as it appears in the input text, preserving spacing and punctuation like maqaf).
+3.  If a phrase contains difficult words (based *strictly* on the criteria above), the object MUST also include a "difficult_words" key.
+    *   The value of "difficult_words" MUST be an array of objects.
+    *   Each object in this inner array MUST have a "he" key (the difficult Hebrew word, exactly as in the text) and an "en" key (its concise English translation).
+4.  If a phrase contains NO difficult words according to these strict criteria, OMIT the "difficult_words" key entirely for that phrase's object.
+
+**Phrase Splitting:**
+*   Split the text at natural semantic or syntactic breaks (e.g., before/after major conjunctions like וְ connecting clauses, clauses starting with אֲשֶׁר, prepositional phrases that initiate a thought, verse markers if logical).
+*   Aim for phrases that are roughly 4-8 words long, forming coherent units for translation.
+*   Ensure phrase boundaries align with the original text's word spacing and punctuation (maqaf, etnachta, sof pasuk).
+
+Output ONLY the JSON array, enclosed in triple backticks:
+\`\`\`json
+[ ... ]
+\`\`\`
+
+Hebrew Text:
+${text}
+
+JSON Response:`;
+
+            const geminiResponseText = await callGemini(prompt, 'Splitting text and identifying difficult words...');
+
+            if (!geminiResponseText) {
+                 console.error("Failed to get phrase split and difficult words from Gemini.");
+                 allDifficultWords = []; // Ensure this is empty on failure
+                 return [];
+            }
+
+            try {
+                 let jsonString = geminiResponseText.trim();
+                 if (jsonString.startsWith('```json')) {
+                     jsonString = jsonString.substring(7, jsonString.lastIndexOf('```')).trim();
+                 } else if (jsonString.startsWith('```')) {
+                      jsonString = jsonString.substring(3, jsonString.lastIndexOf('```')).trim();
+                 }
+
+                 const parsedData = JSON.parse(jsonString);
+
+                 if (!Array.isArray(parsedData)) {
+                      console.error("Gemini response was not a JSON array:", parsedData);
+                      fullTextDiv.innerHTML += '<p style="color: orange;">AI returned unexpected format for phrases.</p>';
+                       allDifficultWords = []; // Ensure this is empty on failure
+                      return [];
+                 }
+
+                 const phraseObjects = [];
+                 lastEndIndex = 0;
+                 const uniqueDifficultWords = new Map(); // Use a Map to store unique {he, en} by he key
+
+                 parsedData.forEach(phraseObject => {
+                     if (typeof phraseObject !== 'object' || phraseObject === null || !phraseObject.he || typeof phraseObject.he !== 'string') {
+                          console.warn("Skipping invalid phrase object from Gemini:", phraseObject);
+                          return;
+                     }
+
+                     const phraseText = phraseObject.he.trim();
+                     const difficultWordsForPhrase = phraseObject.difficult_words; // May be undefined or null
+
+                     // --- Collect ALL difficult words from this phrase for the global list ---
+                     if (difficultWordsForPhrase !== undefined && difficultWordsForPhrase !== null && Array.isArray(difficultWordsForPhrase)) {
+                         difficultWordsForPhrase.forEach(word => {
+                             // Validate individual word object
+                             if (typeof word === 'object' && word !== null && typeof word.he === 'string' && typeof word.en === 'string' && word.he.trim() !== '' && word.en.trim() !== '') {
+                                 const heWord = word.he.trim();
+                                 // Add to the map if the Hebrew word hasn't been seen yet
+                                 if (!uniqueDifficultWords.has(heWord)) {
+                                     uniqueDifficultWords.set(heWord, { he: heWord, en: word.en.trim() });
+                                 }
+                             } else {
+                                 console.warn("Skipping invalid difficult word object:", word);
+                             }
+                         });
+                     }
+                     // --- End Collection ---
+
+
+                     if (phraseText) {
+                         const searchStartIndex = text.substring(lastEndIndex).indexOf(phraseText);
+
+                         if (searchStartIndex !== -1) {
+                              const startIndex = lastEndIndex + searchStartIndex;
+                              const endIndex = startIndex + phraseText.length;
+
+                              // Store phrase *without* the per-phrase difficult_words property
+                              phraseObjects.push({
+                                  he: phraseText,
+                                  startIndex: startIndex,
+                                  endIndex: endIndex
+                              });
+                              lastEndIndex = endIndex;
+                         } else {
+                             console.warn(`Could not find phrase "${phraseText}" in the original text starting after index ${lastEndIndex}. Skipping this phrase.`);
+                         }
+                     }
+                 });
+
+                 // Convert the unique words Map values into an array and sort it
+                 // allDifficultWords = Array.from(uniqueDifficultWords.values()).sort((a, b) => a.he.localeCompare(b.he, 'he'));
+                 allDifficultWords = Array.from(uniqueDifficultWords.values());
+
+                 console.log("Split Phrases (with indices):", phraseObjects);
+                 console.log("All Difficult Words (Unique & Sorted):", allDifficultWords);
+
+                 return phraseObjects;
+
+            } catch (error) {
+                 console.error("Error parsing Gemini JSON response for splitting:", error);
+                 fullTextDiv.innerHTML += '<p style="color: orange;">Could not parse phrases or difficult words from the translation service.</p>';
+                 allDifficultWords = []; // Ensure this is empty on parsing error
+                 return [];
+            }
+        }
+
+        /**
+         * Displays the list of all difficult words collected for the text.
+         */
+        function displayAllDifficultWords() {
+             difficultWordsList.innerHTML = ''; // Clear previous content
+             if (allDifficultWords.length > 0) {
+                 allDifficultWords.forEach(word => {
+                     const li = document.createElement('li');
+                     const heSpan = document.createElement('span');
+                     heSpan.setAttribute('lang', 'he');
+                     heSpan.textContent = word.he;
+                     li.appendChild(heSpan);
+                     li.appendChild(document.createTextNode(': ' + word.en));
+                     difficultWordsList.appendChild(li);
+                 });
+                 difficultWordsArea.style.display = 'flex'; // Show the container (using flex display)
+                 difficultWordsArea.classList.add('fade-in'); // Add fade-in animation
+             } else {
+                 difficultWordsArea.style.display = 'none'; // Hide if no difficult words found
+             }
+        }
+
+
+                /**
+         * Displays the current phrase for translation. (Difficult words are handled globally).
+         */
+        function displayCurrentPhrase() {
+            // --- (Existing logic for fading out/in elements remains the same) ---
+            currentPhraseTextSpan.classList.remove('fade-in');
+            translationInput.classList.remove('fade-in', 'slide-in');
+
+            if (currentPhraseIndex < phrases.length) {
+                // --- (Existing logic for displaying the phrase, clearing input, etc. remains the same) ---
+                const phrase = phrases[currentPhraseIndex];
+                currentPhraseTextSpan.textContent = phrase.he;
+                translationInput.value = '';
+                feedbackArea.style.display = 'none';
+                feedbackArea.className = '';
+
+                checkButton.style.display = 'inline-block';
+                idkButton.style.display = 'inline-block';
+                nextPhraseButton.style.display = 'none';
+                translationInput.disabled = false;
+                nextPhraseButton.classList.remove('pulsing-button');
+
+                highlightCurrentPhraseInFullText();
+                updatePhraseLocation();
+
+                translationInput.focus();
+
+                 setTimeout(() => {
+                      currentPhraseTextSpan.classList.add('fade-in');
+                      translationInput.classList.add('fade-in', 'slide-in');
+                 }, 50);
+
+            } else {
+                // End of quiz for this text
+                quizArea.style.display = 'none';
+                quizCompleteDiv.style.display = 'block';
+
+                // --- (Existing logic for removing highlight remains the same) ---
+                 if (currentPhraseSpan) {
+                     const parent = currentPhraseSpan.parentNode;
+                     if (parent) {
+                          const fragment = document.createDocumentFragment();
+                          while(currentPhraseSpan.firstChild) {
+                              fragment.appendChild(currentPhraseSpan.firstChild);
+                          }
+                          parent.insertBefore(fragment, currentPhraseSpan);
+                          parent.removeChild(currentPhraseSpan);
+                     }
+                     currentPhraseSpan = null;
+                 }
+
+                // --- <<< REMOVED REFERENCE ADDITION LOGIC FROM HERE >>> ---
+                // The reference is now added in fetchRandomText upon successful fetch.
+                // No need to add it again here. We can still log a completion message.
+                if (currentTextReference) {
+                    console.log(`Quiz completed for reference: "${currentTextReference}". It should already be in the history.`);
+                } else {
+                    console.warn("Quiz completed, but no currentTextReference was stored.");
+                }
+                // --- <<< END OF REMOVED LOGIC >>> ---
+
+                 // Scroll to the completion message
+                 quizCompleteDiv.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
+        }
+
+        /**
+         * Highlights the current phrase in the full text display using stored indices.
+         */
+        function highlightCurrentPhraseInFullText() {
+            // Remove previous highlight
+            if (currentPhraseSpan) {
+                 currentPhraseSpan.classList.remove('highlight-phrase');
+                 const parent = currentPhraseSpan.parentNode;
+                 if (parent) {
+                       const fragment = document.createDocumentFragment();
+                       while(currentPhraseSpan.firstChild) {
+                           fragment.appendChild(currentPhraseSpan.firstChild);
+                       }
+                       parent.insertBefore(fragment, currentPhraseSpan);
+                      parent.removeChild(currentPhraseSpan);
+                 }
+                 currentPhraseSpan = null;
+            }
+
+            if (currentPhraseIndex < phrases.length) {
+                const phrase = phrases[currentPhraseIndex];
+
+                if (phrase.startIndex !== undefined && phrase.endIndex !== undefined) {
+                     const before = fullText.substring(0, phrase.startIndex);
+                     const highlight = fullText.substring(phrase.startIndex, phrase.endIndex);
+                     const after = fullText.substring(phrase.endIndex);
+
+                     const highlightSpan = document.createElement('span');
+                     highlightSpan.textContent = highlight;
+                     highlightSpan.classList.add('highlight-phrase');
+                     currentPhraseSpan = highlightSpan;
+
+                     // Reconstruct the full text display with the highlight span
+                     // Escape text outside the highlight span
+                     const content = document.createDocumentFragment();
+                     content.appendChild(document.createTextNode(before));
+                     content.appendChild(highlightSpan);
+                     content.appendChild(document.createTextNode(after));
+
+                     // Clear existing content before appending the new fragment
+                     while (fullTextDiv.firstChild) {
+                        fullTextDiv.removeChild(fullTextDiv.firstChild);
+                     }
+                     fullTextDiv.appendChild(content);
+
+
+                     // Scroll the highlighted phrase into view if needed
+                     setTimeout(() => {
+                         const highlightedElement = fullTextDiv.querySelector('.highlight-phrase');
+                         if (highlightedElement) {
+                             highlightedElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                         }
+                     }, 100);
+
+                } else {
+                     console.error("Phrase indices not found for highlighting.");
+                     fullTextDiv.textContent = fullText; // Just show raw text as fallback
+                }
+            } else {
+                 // Quiz complete, ensure full text is displayed without highlight
+                 fullTextDiv.textContent = fullText;
+            }
+        }
+
+
+        /**
+         * Updates the phrase location indicator.
+         */
+        function updatePhraseLocation() {
+            phraseLocationDiv.textContent = `Phrase ${currentPhraseIndex + 1} of ${phrases.length}`;
+            if (currentTextReference) {
+                phraseLocationDiv.textContent += ` (from ${currentTextReference})`;
+            }
+        }
+
+
+                /**
+         * Checks the user's translation using the Gemini API, providing full text context.
+         */
+        async function checkTranslation() {
+            const userAnswer = translationInput.value.trim();
+            const currentPhrase = phrases[currentPhraseIndex].he;
+            // Access the global fullText variable for context
+            const contextText = fullText;
+
+            if (!userAnswer) {
+                alert("Please enter a translation.");
+                translationInput.focus();
+                return;
+            }
+
+            // --- MODIFIED PROMPT ---
+            // Added the full passage context and instructions on how to use it.
+            const prompt = `Evaluate the following English translation provided by a user for a specific Hebrew phrase, considering the full context from which the phrase was taken.
+
+Full Context (The complete passage, potentially multiple verses):
+${contextText}
+
+Specific Hebrew Phrase to Evaluate (this is a part of the Full Context above):
+${currentPhrase}
+
+User's Translation of the Specific Hebrew Phrase:
+${userAnswer}
+
+Instructions:
+1.  Evaluate the User's Translation based *only* on the "Specific Hebrew Phrase".
+2.  Use the "Full Context" to understand the meaning, flow, and potential nuances of the Specific Phrase within the passage. This context may help resolve ambiguities or justify certain interpretations (e.g., pronoun references, word choices influenced by surrounding text).
+3.  Be very lenient with typos and spelling mistakes in the user's translation; they should **not** negatively impact the evaluation (correct/acceptable/incorrect). Assume the user meant the correctly spelled word if it's recognizable.
+4.  Consider valid alternate interpretations or traditions (e.g., Rashi, Ibn Ezra, contextually derived meaning). If the user's translation reflects a plausible understanding of the specific phrase *within its context*, even if different from a standard literal translation, mark it as "correct" or "acceptable".
+5.  Determine if the translation is "correct", "acceptable", or "incorrect".
+6.  Provide a brief, helpful comment explaining your evaluation. If incorrect or acceptable, also provide a concise, accurate English translation of the *specific Hebrew phrase* as a model answer. Reference the context in your comment if it helps clarify the reasoning.
+
+Respond ONLY in JSON format:
+{
+  "evaluation": "correct" | "acceptable" | "incorrect",
+  "comment": "Explain your evaluation (e.g., missing a key element, slightly awkward phrasing, reflects interpretation X, literal meaning Y is also valid, etc.). Be brief and helpful, potentially referencing the context if relevant.",
+  "correct_translation": "Optional: Provide the concise, accurate English translation of the specific Hebrew phrase if the user's was not fully correct."
+}
+
+JSON Response:`;
+            // --- END OF MODIFIED PROMPT ---
+
+
+            // Use a slightly more descriptive loading message
+            const geminiResponseText = await callGemini(prompt, 'Checking translation with context...');
+
+            if (!geminiResponseText) {
+                 translationInput.disabled = false;
+                 checkButton.style.display = 'inline-block';
+                 idkButton.style.display = 'inline-block';
+                 nextPhraseButton.style.display = 'none';
+                 return;
+            }
+
+            try {
+                let jsonString = geminiResponseText.trim();
+                 if (jsonString.startsWith('```json')) {
+                     jsonString = jsonString.substring(7, jsonString.lastIndexOf('```')).trim();
+                 } else if (jsonString.startsWith('```')) {
+                      jsonString = jsonString.substring(3, jsonString.lastIndexOf('```')).trim();
+                 }
+
+                const feedback = JSON.parse(jsonString);
+
+                feedbackArea.style.display = 'block';
+                feedbackArea.classList.add('fade-in');
+
+                const evaluation = feedback.evaluation ? feedback.evaluation.toLowerCase() : 'unknown';
+                const comment = feedback.comment || 'No specific comment provided.';
+                const correctTranslation = feedback.correct_translation;
+
+                feedbackCommentsDiv.textContent = comment;
+
+
+                if (evaluation === 'correct') {
+                    feedbackMessageDiv.textContent = 'Correct!';
+                    feedbackArea.className = 'feedback-area feedback-correct'; // Use class assignment for clarity
+                    correctTranslationDiv.textContent = ''; // Clear any previous suggestion
+
+                } else if (evaluation === 'acceptable') {
+                    feedbackMessageDiv.textContent = 'Acceptable, but could be better.';
+                    feedbackArea.className = 'feedback-area feedback-acceptable';
+                    correctTranslationDiv.innerHTML = correctTranslation
+                        ? `<strong>Suggested Translation:</strong> ${escapeHTML(correctTranslation)}`
+                        : '';
+
+                } else { // incorrect or unknown
+                    feedbackMessageDiv.textContent = 'Incorrect.';
+                    feedbackArea.className = 'feedback-area feedback-incorrect';
+                     correctTranslationDiv.innerHTML = correctTranslation
+                        ? `<strong>Correct Translation:</strong> ${escapeHTML(correctTranslation)}`
+                        : 'Correct translation could not be determined.';
+                }
+
+            } catch (error) {
+                 console.error("Error parsing Gemini JSON response for checking:", error);
+                 console.error("Problematic Gemini Response Text:", geminiResponseText); // Log the problematic response
+                 feedbackArea.style.display = 'block';
+                 feedbackArea.className = 'feedback-area feedback-show-answer'; // Use a neutral class for error
+                 feedbackMessageDiv.textContent = 'Could not process feedback from the translation service.';
+                 correctTranslationDiv.textContent = '';
+                 feedbackCommentsDiv.textContent = 'An error occurred while evaluating your translation. Check the console for details.';
+            } finally {
+                 checkButton.style.display = 'none';
+                 idkButton.style.display = 'none';
+                 translationInput.disabled = true;
+                 nextPhraseButton.style.display = 'block';
+                 nextPhraseButton.classList.add('pulsing-button');
+
+                  feedbackArea.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }
+        }
+
+        /**
+         * Handles the "I don't know" button click using the Gemini API.
+         */
+        async function handleIDK() {
+             const currentPhrase = phrases[currentPhraseIndex].he;
+
+             const prompt = `Translate the following Hebrew phrase from Tanakh into clear, accurate English. Provide only the English translation text.
+
+    Hebrew Phrase: ${currentPhrase}
+
+    English Translation:`;
+
+             const geminiResponseText = await callGemini(prompt, "Getting translation...");
+
+            if (!geminiResponseText) {
+                 checkButton.style.display = 'inline-block';
+                 idkButton.style.display = 'inline-block';
+                 translationInput.disabled = false;
+                 nextPhraseButton.style.display = 'none';
+                 return;
+            }
+
+             feedbackArea.style.display = 'block';
+             feedbackArea.classList.add('fade-in', 'feedback-show-answer');
+             feedbackMessageDiv.textContent = "Here's the translation:";
+             correctTranslationDiv.innerHTML = `<strong>Correct Translation:</strong> ${escapeHTML(geminiResponseText.trim())}`;
+             feedbackCommentsDiv.textContent = 'Review this phrase before moving on.';
+
+             checkButton.style.display = 'none';
+             idkButton.style.display = 'none';
+             translationInput.disabled = true;
+             nextPhraseButton.style.display = 'block';
+             nextPhraseButton.classList.add('pulsing-button');
+
+             feedbackArea.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+
+        /**
+         * Moves to the next phrase.
+         */
+        function nextPhrase() {
+            currentPhraseTextSpan.classList.remove('fade-in');
+            translationInput.classList.remove('fade-in', 'slide-in');
+            // difficultWordsArea fade-in is not removed here as it's global now
+
+            currentPhraseIndex++;
+            displayCurrentPhrase();
+        }
+
+        /**
+         * Utility function to escape HTML for safe display.
+         */
+        function escapeHTML(str) {
+            if (typeof str !== 'string') return '';
+            const div = document.createElement('div');
+            div.appendChild(document.createTextNode(str));
+            return div.innerHTML;
+        }
+
+        // --- Event Listeners ---
+        checkButton.addEventListener('click', checkTranslation);
+        idkButton.addEventListener('click', handleIDK);
+        nextPhraseButton.addEventListener('click', nextPhrase);
+
+         translationInput.addEventListener('keypress', function(event) {
+              if (event.key === 'Enter' && !translationInput.disabled && checkButton.style.display !== 'none' && !checkButton.disabled) {
+                  event.preventDefault();
+                  checkTranslation();
+              }
+         });
+
+         window.addEventListener('keypress', function(event) {
+              if (event.key === 'Enter' && nextPhraseButton.style.display === "block" && document.activeElement !== translationInput) {
+                  event.preventDefault();
+                  nextPhrase();
+                   if (currentPhraseIndex < phrases.length) {
+                       translationInput.focus();
+                   }
+              }
+         });
+
+
+        // --- Initialization ---
+        async function init() {
+            completedReferences = loadCompletedReferences();
+            console.log("Loaded completed references:", completedReferences);
+
+            fullText = await fetchRandomText();
+
+            if (fullText && currentTextReference) {
+                // Display the full fetched text initially (before highlight logic runs)
+                fullTextDiv.textContent = fullText;
+
+                // Split into phrases and collect *all* difficult words
+                phrases = await splitIntoPhrasesWithGemini(fullText);
+
+                // Display the collected difficult words for the entire text
+                displayAllDifficultWords(); // New call here
+
+                if (phrases.length > 0) {
+                    quizArea.style.display = 'block'; // Show the quiz area
+                    displayCurrentPhrase(); // Start the quiz with the first phrase
+                } else {
+                    fullTextDiv.innerHTML += '<p style="color: orange;">Could not retrieve or split text into phrases for this reference.</p>';
+                    hideLoading();
+                }
+            } else {
+                 hideLoading();
+            }
+        }
+
+        init();
+    </script>
+</body>
+</html>

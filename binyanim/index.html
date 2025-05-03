@@ -1,0 +1,828 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Binyanim Quiz</title>
+    <style>
+        body {
+            font-family: sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background-color: #f4f4f4;
+            color: #333;
+            line-height: 1.6;
+        }
+
+        #quiz-container {
+            background-color: #fff;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            text-align: center;
+            max-width: 650px; /* Slightly wider for potentially longer options */
+            width: 90%;
+        }
+
+        h1 {
+            color: #0056b3;
+            margin-bottom: 20px;
+        }
+
+        #question {
+            font-size: 1.3em; /* Slightly larger */
+            margin-bottom: 30px;
+            min-height: 3.5em; /* Reserve more space */
+            direction: rtl; /* Right-to-left for Hebrew text */
+            text-align: right;
+            font-weight: bold;
+        }
+
+        #options-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            grid-gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .option-box {
+            background-color: #e9e9e9;
+            padding: 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s ease, border 0.3s ease;
+            text-align: center;
+            font-size: 1.1em;
+            font-weight: bold;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 70px; /* Ensure minimum size */
+            border: 2px solid transparent; /* For feedback colors */
+            direction: rtl; /* Right-to-left for Hebrew text within boxes */
+            box-sizing: border-box; /* Include padding and border in element's total width and height */
+             position: relative; /* Needed for the number indicator */
+        }
+
+         .option-box span.number-indicator {
+            position: absolute;
+            top: 5px;
+            left: 8px; /* Adjust for RTL */
+            font-size: 0.8em;
+            font-weight: normal;
+            color: #555;
+        }
+
+
+        .option-box:hover:not(.disabled) {
+            background-color: #dcdcdc;
+        }
+
+        .option-box.correct {
+            background-color: #d4edda;
+            border-color: #28a745;
+        }
+
+        .option-box.incorrect {
+            background-color: #f8d7da;
+            border-color: #dc3545;
+        }
+
+        .option-box.disabled {
+            cursor: not-allowed;
+            opacity: 0.7;
+        }
+
+        #feedback {
+            font-size: 1.1em;
+            margin-top: 20px;
+            min-height: 1.5em; /* Reserve space */
+            direction: rtl; /* Right-to-left for Hebrew text */
+            text-align: right;
+        }
+
+        .feedback-correct {
+            color: #28a745;
+        }
+
+        .feedback-incorrect {
+            color: #dc3545;
+        }
+
+        #next-button {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 1em;
+            transition: background-color 0.3s ease;
+            margin-top: 20px;
+        }
+
+        #next-button:hover:not(:disabled) {
+            background-color: #0056b3;
+        }
+
+        #next-button:disabled {
+            background-color: #cccccc;
+            cursor: not-allowed;
+        }
+         #keyboard-hint {
+            font-size: 0.9em;
+            color: #666;
+            margin-top: 15px;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="quiz-container">
+        <h1>Hebrew Binyanim Quiz</h1>
+        <div id="question">Loading question...</div>
+        <div id="options-grid">
+            <div class="option-box"><span class="number-indicator">1.</span> Option 1</div>
+            <div class="option-box"><span class="number-indicator">2.</span> Option 2</div>
+            <div class="option-box"><span class="number-indicator">3.</span> Option 3</div>
+            <div class="option-box"><span class="number-indicator">4.</span> Option 4</div>
+        </div>
+        <div id="feedback"></div>
+        <button id="next-button">Next Question (Press Enter)</button>
+        <div id="keyboard-hint">Use keys 1-4 to select an answer.</div>
+    </div>
+
+    <script>
+        // Data structure: An array of objects, each representing a quiz item.
+        // This makes it easier to select items randomly and get distinct incorrect answers.
+        const quizData = [
+    // Qal (~20 examples)
+    { feature: "Qal", word: "שָׁמַר", description: "basic active binyan (e.g., he guarded)" },
+    { feature: "Qal", word: "כָּתַב", description: "basic active binyan (e.g., he wrote)" },
+    { feature: "Qal", word: "אָכַל", description: "basic active binyan (e.g., he ate)" },
+    { feature: "Qal", word: "הָלַךְ", description: "basic active binyan (e.g., he walked)" },
+    { feature: "Qal", word: "יָשַׁב", description: "basic active binyan (e.g., he sat)" },
+    { feature: "Qal", word: "קָם", description: "basic active binyan (e.g., he stood up)" }, // פ״ו verb
+    { feature: "Qal", word: "בָּא", description: "basic active binyan (e.g., he came)" }, // ל״א verb
+    { feature: "Qal", word: "בָּנָה", description: "basic active binyan (e.g., he built)" }, // ל״ה verb
+    { feature: "Qal", word: "מָצָא", description: "basic active binyan (e.g., he found)" }, // ל״א verb
+    { feature: "Qal", word: "נָתַן", description: "basic active binyan (e.g., he gave)" }, // פ״נ verb
+    { feature: "Qal", word: "קָרָא", description: "basic active binyan (e.g., he called/read)" },
+    { feature: "Qal", word: "עָשָׂה", description: "basic active binyan (e.g., he did/made)" },
+    { feature: "Qal", word: "דָּבַר", description: "basic active binyan (e.g., he spoke)" },
+    { feature: "Qal", word: "שָׁלַח", description: "basic active binyan (e.g., he sent)" },
+    { feature: "Qal", word: "פָּקַד", description: "basic active binyan (e.g., he visited/appointed)" },
+    { feature: "Qal", word: "זָכַר", description: "basic active binyan (e.g., he remembered)" },
+    { feature: "Qal", word: "שָׁכַח", description: "basic active binyan (e.g., he forgot)" },
+    { feature: "Qal", word: "עָבַר", description: "basic active binyan (e.g., he passed over)" },
+    { feature: "Qal", word: "יָרַד", description: "basic active binyan (e.g., he went down)" }, // פ״י verb
+    { feature: "Qal", word: "שׁוּב", description: "basic active binyan (e.g., he returned)" }, // ע״ו verb
+
+    // Niphal (General/Various examples - aim for ~20, covering different root types and nuances)
+    { feature: "Niphal (General)", word: "נִפְתַּח", description: "passive/reflexive/reciprocal binyan (e.g., it was opened)" },
+    { feature: "Niphal (General)", word: "נִכְתַּב", description: "passive binyan (e.g., it was written)" },
+    { feature: "Niphal (General)", word: "נֶאֱכַל", description: "passive binyan (e.g., it was eaten)" }, // פ״א verb
+    { feature: "Niphal (General)", word: "נִלְקַח", description: "passive binyan (e.g., he was taken)" }, // פ״ל verb
+    { feature: "Niphal (General)", word: "נִשְׁמַר", description: "reflexive binyan (e.g., he guarded himself)" },
+    { feature: "Niphal (General)", word: "נִבְנָה", description: "passive binyan (e.g., it was built)" }, // ל״ה verb
+    { feature: "Niphal (General)", word: "נִמְצָא", description: "passive binyan (e.g., it was found)" }, // ל״א verb
+    { feature: "Niphal (General)", word: "נִתַּן", description: "passive binyan (e.g., it was given)" }, // פ״נ verb
+    { feature: "Niphal (General)", word: "נֶעֱשָׂה", description: "passive binyan (e.g., it was done/made)" }, // ל״ה verb
+    { feature: "Niphal (General)", word: "נִדְבָּר", description: "passive binyan (e.g., it was spoken)" },
+    { feature: "Niphal (General)", word: "נִשְׁלַח", description: "passive binyan (e.g., he was sent)" },
+    { feature: "Niphal (General)", word: "נִפְקַד", description: "passive binyan (e.g., he was visited)" },
+    { feature: "Niphal (General)", word: "נִזְכַּר", description: "passive binyan (e.g., he was remembered)" },
+    { feature: "Niphal (General)", word: "נִקְרָא", description: "passive binyan (e.g., he was called)" },
+    { feature: "Niphal (General)", word: "נֶאֱבְקוּ", description: "reciprocal binyan (e.g., they wrestled)" },
+    { feature: "Niphal (General)", word: "נִרְאָה", description: "passive/reflexive binyan (e.g., he was seen / he appeared)" }, // ל״ה verb
+    { feature: "Niphal (General)", word: "נוֹשָׁע", description: "passive binyan (e.g., he was saved)" }, // פ״י verb
+    { feature: "Niphal (General)", word: "נִגַּשׁ", description: "reflexive/reciprocal binyan (e.g., he approached)" }, // נגע - geminate root
+    { feature: "Niphal (General)", word: "נִכְנַס", description: "reflexive/passive binyan (e.g., he entered / it was entered)" },
+    { feature: "Niphal (General)", word: "נִסְפַּר", description: "passive binyan (e.g., it was counted)" },
+
+    // Piel (~20 examples)
+    { feature: "Piel", word: "שִׁמֵּר", description: "intensive active binyan (e.g., he observed)" },
+    { feature: "Piel", word: "דִּבֶּר", description: "intensive active binyan (e.g., he spoke)" },
+    { feature: "Piel", word: "בִּקֵּשׁ", description: "intensive active binyan (e.g., he sought)" },
+    { feature: "Piel", word: "קִדֵּשׁ", description: "intensive active binyan (e.g., he sanctified)" },
+    { feature: "Piel", word: "לִמֵּד", description: "intensive active binyan (e.g., he taught)" },
+    { feature: "Piel", word: "סִפֵּר", description: "intensive active binyan (e.g., he told/narrated)" },
+    { feature: "Piel", word: "טִהֵר", description: "intensive active binyan (e.g., he purified)" },
+    { feature: "Piel", word: "שִׁלֵּם", description: "intensive active binyan (e.g., he paid)" },
+    { feature: "Piel", word: "גִּדֵּל", description: "intensive active binyan (e.g., he raised/grew)" },
+    { feature: "Piel", word: "קִבֵּץ", description: "intensive active binyan (e.g., he gathered)" },
+    { feature: "Piel", word: "אָסַף", description: "intensive active binyan (e.g., he gathered)" }, // Piel of אסף - אוֹסֵף in participle
+    { feature: "Piel", word: "מִלֵּא", description: "intensive active binyan (e.g., he filled)" }, // ל״א verb
+    { feature: "Piel", word: "צִוָּה", description: "intensive active binyan (e.g., he commanded)" }, // ל״ה verb
+    { feature: "Piel", word: "חִלֵּה", description: "intensive active binyan (e.g., he entreated)" }, // ל״ה verb
+    { feature: "Piel", word: "כִּסָּה", description: "intensive active binyan (e.g., he covered)" }, // ל״ה verb
+    { feature: "Piel", word: "יִסֵּר", description: "intensive active binyan (e.g., he disciplined)" }, // יסר - פ״י verb
+    { feature: "Piel", word: "וִתֵּר", description: "intensive active binyan (e.g., he gave up/conceded)" },
+    { feature: "Piel", word: "אִחֵר", description: "intensive active binyan (e.g., he delayed)" }, // אחר - פ״א verb
+    { feature: "Piel", word: "קִדֵּם", description: "intensive active binyan (e.g., he advanced)" },
+    { feature: "Piel", word: "שִׁבֵּר", description: "intensive active binyan (e.g., he broke)" },
+
+    // Pual (~20 examples)
+    { feature: "Pual", word: "שֻׁמַּר", description: "intensive passive binyan (e.g., he was observed)" },
+    { feature: "Pual", word: "דֻּבַּר", description: "intensive passive binyan (e.g., it was spoken)" },
+    { feature: "Pual", word: "בֻּקַּשׁ", description: "intensive passive binyan (e.g., it was sought)" },
+    { feature: "Pual", word: "קֻדַּשׁ", description: "intensive passive binyan (e.g., it was sanctified)" },
+    { feature: "Pual", word: "לֻמַּד", description: "intensive passive binyan (e.g., he was taught)" },
+    { feature: "Pual", word: "סֻפַּר", description: "intensive passive binyan (e.g., it was told/narrated)" },
+    { feature: "Pual", word: "טֻהַר", description: "intensive passive binyan (e.g., he was purified)" },
+    { feature: "Pual", word: "שֻׁלַּם", description: "intensive passive binyan (e.g., it was paid)" },
+    { feature: "Pual", word: "גֻּדַּל", description: "intensive passive binyan (e.g., he was raised/grown)" },
+    { feature: "Pual", word: "קֻבַּץ", description: "intensive passive binyan (e.g., he was gathered)" },
+    { feature: "Pual", word: "אֻסַּף", description: "intensive passive binyan (e.g., he was gathered)" }, // אסף - פ״א verb
+    { feature: "Pual", word: "מֻלָּא", description: "intensive passive binyan (e.g., it was filled)" }, // ל״א verb
+    { feature: "Pual", word: "צֻוָּה", description: "intensive passive binyan (e.g., he was commanded)" }, // ל״ה verb
+    { feature: "Pual", word: "יֻסַּר", description: "intensive passive binyan (e.g., he was disciplined)" }, // יסר - פ״י verb
+    { feature: "Pual", word: "קֻדַּם", description: "intensive passive binyan (e.g., he was advanced)" },
+    { feature: "Pual", word: "שֻׁבַּר", description: "intensive passive binyan (e.g., it was broken)" },
+    { feature: "Pual", word: "חֻלָּה", description: "intensive passive binyan (e.g., he was weakened/sickened)" }, // חלה - ל״ה verb
+    { feature: "Pual", word: "וֻתַּר", description: "intensive passive binyan (e.g., it was given up/conceded)" },
+    { feature: "Pual", word: "אֻחַר", description: "intensive passive binyan (e.g., it was delayed)" }, // אחר - פ״א verb
+    { feature: "Pual", word: "כֻּסָּה", description: "intensive passive binyan (e.g., it was covered)" }, // ל״ה verb
+
+    // Hiphil (~20 examples)
+    { feature: "Hiphil", word: "הוֹשִׁיב", description: "causative active binyan (e.g., he seated)" },
+    { feature: "Hiphil", word: "הִכְתִּיב", description: "causative active binyan (e.g., he dictated)" },
+    { feature: "Hiphil", word: "הֶאֱכִיל", description: "causative active binyan (e.g., he fed)" }, // פ״א verb
+    { feature: "Hiphil", word: "הֵלִיךְ", description: "causative active binyan (e.g., he caused to walk)" }, // הלך - regular, but hiriq under ה
+    { feature: "Hiphil", word: "הִבְנָה", description: "causative active binyan (e.g., he built up/developed)" }, // ל״ה verb
+    { feature: "Hiphil", word: "הִמְצִיא", description: "causative active binyan (e.g., he invented/produced)" }, // ל״א verb
+    { feature: "Hiphil", word: "הִתְקִין", description: "causative active binyan (e.g., he prepared/installed)" }, // תקן - Geminate root, but behaves like regular
+    { feature: "Hiphil", word: "הִגִּיד", description: "causative active binyan (e.g., he told/announced)" }, // נגד - פ״נ verb
+    { feature: "Hiphil", word: "הוֹדָה", description: "causative active binyan (e.g., he thanked/confessed)" }, // ידה - פ״י verb, ל״ה verb
+    { feature: "Hiphil", word: "הִשְׁלִיךְ", description: "causative active binyan (e.g., he threw)" },
+    { feature: "Hiphil", word: "הֶעֱבִיר", description: "causative active binyan (e.g., he caused to pass/moved)" }, // עבר - ע״ע verb
+    { feature: "Hiphil", word: "הִרְאֶה", description: "causative active binyan (e.g., he showed)" }, // ראה - ל״ה verb, פ״ר verb
+    { feature: "Hiphil", word: "הִכִּיר", description: "causative active binyan (e.g., he recognized)" }, // נכר - פ״נ verb
+    { feature: "Hiphil", word: "הֵבִיא", description: "causative active binyan (e.g., he brought)" }, // בוא - פ״ו verb
+    { feature: "Hiphil", word: "הוֹרִיד", description: "causative active binyan (e.g., he brought down)" }, // ירד - פ״י verb
+    { feature: "Hiphil", word: "הִגְדִּיל", description: "causative active binyan (e.g., he magnified/enlarged)" },
+    { feature: "Hiphil", word: "הִקְשִׁיב", description: "causative active binyan (e.g., he listened)" },
+    { feature: "Hiphil", word: "הִזְכִּיר", description: "causative active binyan (e.g., he reminded/mentioned)" },
+    { feature: "Hiphil", word: "הִפְסִיק", description: "causative active binyan (e.g., he stopped)" },
+    { feature: "Hiphil", word: "הִתְחִיל", description: "causative active binyan (e.g., he began)" }, // חלל - Geminate, but behaves like regular
+
+    // Hophal (~20 examples - Passive of Hiphil, less frequent, some examples might be less common)
+    { feature: "Hophal", word: "הוּשַׁב", description: "causative passive binyan (e.g., he was seated)" },
+    { feature: "Hophal", word: "הֻכְתַּב", description: "causative passive binyan (e.g., it was dictated)" },
+    { feature: "Hophal", word: "הֻאֲכַל", description: "causative passive binyan (e.g., he was fed)" }, // פ״א verb
+    { feature: "Hophal", word: "הוּבָא", description: "causative passive binyan (e.g., he was brought)" }, // בוא - פ״ו verb
+    { feature: "Hophal", word: "הֻגַּד", description: "causative passive binyan (e.g., it was told/announced)" }, // נגד - פ״נ verb
+    { feature: "Hophal", word: "הוּרַד", description: "causative passive binyan (e.g., he was brought down)" }, // ירד - פ״י verb
+    { feature: "Hophal", word: "הֻקְטַל", description: "causative passive binyan (a generic example, 'he was killed')" }, // קטל - standard paradigm example
+    { feature: "Hophal", word: "הוּדָה", description: "causative passive binyan (e.g., it was thanked/confessed)" }, // ידה - פ״י verb, ל״ה verb
+    { feature: "Hophal", word: "הֻשְׁלַךְ", description: "causative passive binyan (e.g., it was thrown)" },
+    { feature: "Hophal", word: "הֻעֳבַר", description: "causative passive binyan (e.g., he was caused to pass/moved)" }, // עבר - ע״ע verb
+    { feature: "Hophal", word: "הֻרְאָה", description: "causative passive binyan (e.g., he was shown)" }, // ראה - ל״ה verb, פ״ר verb
+    { feature: "Hophal", word: "הֻכַּר", description: "causative passive binyan (e.g., he was recognized)" }, // נכר - פ״נ verb
+    { feature: "Hophal", word: "הֻבְנָה", description: "causative passive binyan (e.g., it was built up)" }, // ל״ה verb
+    { feature: "Hophal", word: "הֻמְצָא", description: "causative passive binyan (e.g., it was invented/produced)" }, // ל״א verb
+    { feature: "Hophal", word: "הֻתְקַן", description: "causative passive binyan (e.g., it was prepared/installed)" }, // תקן
+    { feature: "Hophal", word: "הֻגְדַּל", description: "causative passive binyan (e.g., it was magnified/enlarged)" },
+    { feature: "Hophal", word: "הֻזְכַּר", description: "causative passive binyan (e.g., he was mentioned)" },
+    { feature: "Hophal", word: "הֻפְסַק", description: "causative passive binyan (e.g., it was stopped)" },
+    { feature: "Hophal", word: "הֻתְחַל", description: "causative passive binyan (e.g., it was begun)" }, // חלל
+    { feature: "Hophal", word: "הוּצַב", description: "causative passive binyan (e.g., he was stationed/set up)" }, // יצב - פ״י verb
+
+    // hispael (~20 examples)
+    { feature: "hispael", word: "הִשְׁתַּמֵּר", description: "reflexive/reciprocal binyan (e.g., he guarded himself)" },
+    { feature: "hispael", word: "הִתְדַּבֵּר", description: "reciprocal binyan (e.g., they spoke among themselves)" },
+    { feature: "hispael", word: "הִתְבַּקֵּשׁ", description: "passive/reflexive binyan (e.g., it was sought; he begged)" },
+    { feature: "hispael", word: "הִתְקַדֵּשׁ", description: "reflexive binyan (e.g., he sanctified himself)" },
+    { feature: "hispael", word: "הִתְלַמֵּד", description: "reflexive binyan (e.g., he taught himself / became a student)" },
+    { feature: "hispael", word: "הִסְתַּפֵּר", description: "reflexive binyan (e.g., he got a haircut)" },
+    { feature: "hispael", word: "הִטַּהֵר", description: "reflexive binyan (e.g., he purified himself)" }, // טהר - ט > ת דגש
+    { feature: "hispael", word: "הִשְׁתַּלֵּם", description: "passive/reflexive binyan (e.g., it was paid; he was compensated)" },
+    { feature: "hispael", word: "הִתְגַּדֵּל", description: "reflexive binyan (e.g., he made himself great)" },
+    { feature: "hispael", word: "הִתְקַבֵּץ", description: "reflexive/passive binyan (e.g., they gathered themselves / it was gathered)" },
+    { feature: "hispael", word: "הִתְאוֹסֵף", description: "reflexive/passive binyan (e.g., he was added)" }, // אסף - פ״א verb
+    { feature: "hispael", word: "הִתְמַלֵּא", description: "reflexive/passive binyan (e.g., it was filled; he filled himself)" }, // ל״א verb
+    { feature: "hispael", word: "הִצְטַוָּה", description: "passive binyan (e.g., he was commanded)" }, // צוה - צ > ט ס
+    { feature: "hispael", word: "הִשְׁתַּחֲוָה", description: "reflexive binyan (e.g., he bowed down)" }, // חוה - ל״ה verb
+    { feature: "hispael", word: "הִתְיַשֵּׁב", description: "reflexive binyan (e.g., he settled down)" }, // ישב - פ״י verb
+    { feature: "hispael", word: "הִתְרָאָה", description: "reciprocal binyan (e.g., they saw each other)" }, // ראה - ל״ה verb, פ״ר verb
+    { feature: "hispael", word: "הִסְתַּכֵּל", description: "reflexive binyan (e.g., he looked closely / considered)" }, // סכל - ס > ס
+    { feature: "hispael", word: "הִזְדַּקֵּן", description: "reflexive binyan (e.g., he grew old)" }, // זקן - ז > ז דגש
+    { feature: "hispael", word: "הִשְׁתַּמֵּשׁ", description: "reflexive binyan (e.g., he used)" },
+    { feature: "hispael", word: "הִתְפַּלֵּל", description: "reflexive binyan (e.g., he prayed)" },
+
+    // qal participle (~20 examples - active participles)
+    { feature: "qal participle", word: "שׁוֹמֵר", description: "active participle in Qal (e.g., guarding)" },
+    { feature: "qal participle", word: "כּוֹתֵב", description: "active participle in Qal (e.g., writing)" },
+    { feature: "qal participle", word: "אוֹכֵל", description: "active participle in Qal (e.g., eating)" },
+    { feature: "qal participle", word: "הוֹלֵךְ", description: "active participle in Qal (e.g., walking)" },
+    { feature: "qal participle", word: "יוֹשֵׁב", description: "active participle in Qal (e.g., sitting)" }, // פ״י verb
+    { feature: "qal participle", word: "קָם", description: "active participle in Qal (e.g., standing)" }, // פ״ו verb, looks like perfect
+    { feature: "qal participle", word: "בָּא", description: "active participle in Qal (e.g., coming)" }, // ל״א verb, looks like perfect
+    { feature: "qal participle", word: "בּוֹנֶה", description: "active participle in Qal (e.g., building)" }, // ל״ה verb
+    { feature: "qal participle", word: "מוֹצֵא", description: "active participle in Qal (e.g., finding)" }, // ל״א verb, looks like Hiphil participle
+    { feature: "qal participle", word: "נוֹתֵן", description: "active participle in Qal (e.g., giving)" }, // פ״נ verb
+    { feature: "qal participle", word: "קוֹרֵא", description: "active participle in Qal (e.g., calling/reading)" },
+    { feature: "qal participle", word: "עוֹשֶׂה", description: "active participle in Qal (e.g., doing/making)" }, // ל״ה verb
+    { feature: "qal participle", word: "דּוֹבֵר", description: "active participle in Qal (e.g., speaking)" },
+    { feature: "qal participle", word: "שׁוֹלֵחַ", description: "active participle in Qal (e.g., sending)" },
+    { feature: "qal participle", word: "פּוֹקֵד", description: "active participle in Qal (e.g., visiting/appointing)" },
+    { feature: "qal participle", word: "זוֹכֵר", description: "active participle in Qal (e.g., remembering)" },
+    { feature: "qal participle", word: "שׁוֹכֵחַ", description: "active participle in Qal (e.g., forgetting)" },
+    { feature: "qal participle", word: "עוֹבֵר", description: "active participle in Qal (e.g., passing over)" },
+    { feature: "qal participle", word: "יוֹרֵד", description: "active participle in Qal (e.g., going down)" }, // פ״י verb
+    { feature: "qal participle", word: "שׁוֹבֵב", description: "active participle in Qal (e.g., returning)" }, // ע״ו verb, can be שָׁב too
+
+     // piel participle (~20 examples - active participles)
+    { feature: "piel participle", word: "מְשַׁמֵּר", description: "active participle in Piel (e.g., observing)" },
+    { feature: "piel participle", word: "מְדַבֵּר", description: "active participle in Piel (e.g., speaking)" },
+    { feature: "piel participle", word: "מְבַקֵּשׁ", description: "active participle in Piel (e.g., seeking)" },
+    { feature: "piel participle", word: "מְקַדֵּשׁ", description: "active participle in Piel (e.g., sanctifying)" },
+    { feature: "piel participle", word: "מְלַמֵּד", description: "active participle in Piel (e.g., teaching)" },
+    { feature: "piel participle", word: "מְסַפֵּר", description: "active participle in Piel (e.g., telling/narrating)" },
+    { feature: "piel participle", word: "מְטַהֵר", description: "active participle in Piel (e.g., purifying)" },
+    { feature: "piel participle", word: "מְשַׁלֵּם", description: "active participle in Piel (e.g., paying)" },
+    { feature: "piel participle", word: "מְגַדֵּל", description: "active participle in Piel (e.g., raising/growing)" },
+    { feature: "piel participle", word: "מְקַבֵּץ", description: "active participle in Piel (e.g., gathering)" },
+    { feature: "piel participle", word: "מְמַלֵּא", description: "active participle in Piel (e.g., filling)" }, // ל״א verb
+    { feature: "piel participle", word: "מְצַוֶּה", description: "active participle in Piel (e.g., commanding)" }, // ל״ה verb
+    { feature: "piel participle", word: "מְכַסֶּה", description: "active participle in Piel (e.g., covering)" }, // ל״ה verb
+    { feature: "piel participle", word: "מְיַסֵּר", description: "active participle in Piel (e.g., disciplining)" }, // יסר - פ״י verb
+    { feature: "piel participle", word: "מְוַתֵּר", description: "active participle in Piel (e.g., giving up/conceding)" },
+    { feature: "piel participle", word: "מְאַחֵר", description: "active participle in Piel (e.g., delaying)" }, // אחר - פ״א verb
+    { feature: "piel participle", word: "מְקַדֵּם", description: "active participle in Piel (e.g., advancing)" },
+    { feature: "piel participle", word: "מְשַׁבֵּר", description: "active participle in Piel (e.g., breaking)" },
+    { feature: "piel participle", word: "מְפָרֵשׁ", description: "active participle in Piel (e.g., explaining)" },
+    { feature: "piel participle", word: "מְבָרֵךְ", description: "active participle in Piel (e.g., blessing)" },
+
+     // hiphil participle (~20 examples - active participles)
+    { feature: "hiphil participle", word: "מַשְׁמִיר", description: "active participle in Hiphil (e.g., destroying)" },
+    { feature: "hiphil participle", word: "מוֹשִׁיב", description: "active participle in Hiphil (e.g., seating)" },
+    { feature: "hiphil participle", word: "מַכְתִּיב", description: "active participle in Hiphil (e.g., dictating)" },
+    { feature: "hiphil participle", word: "מַאֲכִיל", description: "active participle in Hiphil (e.g., feeding)" }, // פ״א verb
+    { feature: "hiphil participle", word: "מֵלִיךְ", description: "active participle in Hiphil (e.g., causing to walk)" }, // הלך
+    { feature: "hiphil participle", word: "מַבְנֶה", description: "active participle in Hiphil (e.g., building up/developing)" }, // ל״ה verb
+    { feature: "hiphil participle", word: "מַמְצִיא", description: "active participle in Hiphil (e.g., inventing/producing)" }, // ל״א verb
+    { feature: "hiphil participle", word: "מַתְקִין", description: "active participle in Hiphil (e.g., preparing/installing)" }, // תקן
+    { feature: "hiphil participle", word: "מַגִּיד", description: "active participle in Hiphil (e.g., telling/announcing)" }, // נגד - פ״נ verb
+    { feature: "hiphil participle", word: "מוֹדֶה", description: "active participle in Hiphil (e.g., thanking/confessing)" }, // ידה - פ״י verb, ל״ה verb
+    { feature: "hiphil participle", word: "מַשְׁלִיךְ", description: "active participle in Hiphil (e.g., throwing)" },
+    { feature: "hiphil participle", word: "מַעֲבִיר", description: "active participle in Hiphil (e.g., causing to pass/moving)" }, // עבר - ע״ע verb
+    { feature: "hiphil participle", word: "מַרְאֶה", description: "active participle in Hiphil (e.g., showing)" }, // ראה - ל״ה verb, פ״ר verb
+    { feature: "hiphil participle", word: "מַכִּיר", description: "active participle in Hiphil (e.g., recognizing)" }, // נכר - פ״נ verb
+    { feature: "hiphil participle", word: "מֵבִיא", description: "active participle in Hiphil (e.g., bringing)" }, // בוא - פ״ו verb
+    { feature: "hiphil participle", word: "מוֹרִיד", description: "active participle in Hiphil (e.g., bringing down)" }, // ירד - פ״י verb
+    { feature: "hiphil participle", word: "מַגְדִּיל", description: "active participle in Hiphil (e.g., magnifying/enlarging)" },
+    { feature: "hiphil participle", word: "מַקְשִׁיב", description: "active participle in Hiphil (e.g., listening)" },
+    { feature: "hiphil participle", word: "מַזְכִּיר", description: "active participle in Hiphil (e.g., reminding/mentioning)" },
+    { feature: "hiphil participle", word: "מַפְסִיק", description: "active participle in Hiphil (e.g., stopping)" },
+
+
+    // niphal participle (~20 examples - passive/reflexive/reciprocal participles)
+    { feature: "niphal participle", word: "נִשְׁמָר", description: "passive participle in Niphal (e.g., being guarded)" },
+    { feature: "niphal participle", word: "נִכְתָּב", description: "passive participle in Niphal (e.g., being written)" },
+    { feature: "niphal participle", word: "נֶאֱכָל", description: "passive participle in Niphal (e.g., being eaten)" }, // פ״א verb
+    { feature: "niphal participle", word: "נִלְקָח", description: "passive participle in Niphal (e.g., being taken)" }, // פ״ל verb
+    { feature: "niphal participle", word: "נִבְנָה", description: "passive participle in Niphal (e.g., being built)" }, // ל״ה verb, looks like perfect
+    { feature: "niphal participle", word: "נִמְצָא", description: "passive participle in Niphal (e.g., being found)" }, // ל״א verb, looks like perfect
+    { feature: "niphal participle", word: "נִתָּן", description: "passive participle in Niphal (e.g., being given)" }, // פ״נ verb, looks like perfect
+    { feature: "niphal participle", word: "נֶעֱשֶׂה", description: "passive participle in Niphal (e.g., being done/made)" }, // ל״ה verb
+    { feature: "niphal participle", word: "נִדְבָּר", description: "passive participle in Niphal (e.g., being spoken)" },
+    { feature: "niphal participle", word: "נִשְׁלָח", description: "passive participle in Niphal (e.g., being sent)" },
+    { feature: "niphal participle", word: "נִפְקָּד", description: "passive participle in Niphal (e.g., being visited)" },
+    { feature: "niphal participle", word: "נִזְכָּר", description: "passive participle in Niphal (e.g., being remembered)" },
+    { feature: "niphal participle", word: "נִקְרָא", description: "passive participle in Niphal (e.g., being called)" }, // looks like perfect
+    { feature: "niphal participle", word: "נֶאֱבָק", description: "reciprocal participle in Niphal (e.g., wrestling)" },
+    { feature: "niphal participle", word: "נִרְאֶה", description: "passive/reflexive participle in Niphal (e.g., being seen / appearing)" }, // ל״ה verb
+    { feature: "niphal participle", word: "נוֹשָׁע", description: "passive participle in Niphal (e.g., being saved)" }, // פ״י verb, looks like perfect
+    { feature: "niphal participle", word: "נִכְנָס", description: "reflexive/passive participle in Niphal (e.g., entering / being entered)" },
+    { feature: "niphal participle", word: "נִסְפָּר", description: "passive participle in Niphal (e.g., being counted)" },
+    { feature: "niphal participle", word: "נִזְהָר", description: "reflexive participle in Niphal (e.g., being careful)" },
+    { feature: "niphal participle", word: "נֶעֱזָב", description: "passive participle in Niphal (e.g., being left/forsaken)" }, // עזב - ע״ע verb
+
+     // Qal passive (~20 examples - looks like Qal perfect, but passive/adjectival)
+    { feature: "Qal passive", word: "שָׁמוּר", description: "passive Qal participle (e.g., guarded - adj.)" },
+    { feature: "Qal passive", word: "כָּתוּב", description: "passive Qal participle (e.g., written - adj.)" },
+    { feature: "Qal passive", word: "אָכוּל", description: "passive Qal participle (e.g., eaten - adj.)" },
+    { feature: "Qal passive", word: "לָקוּחַ", description: "passive Qal participle (e.g., taken - adj.)" }, // לקח - פ״ל verb
+    { feature: "Qal passive", word: "בָּנוּי", description: "passive Qal participle (e.g., built - adj.)" }, // בנה - ל״ה verb
+    { feature: "Qal passive", word: "מָצוּי", description: "passive Qal participle (e.g., found / common - adj.)" }, // מצא - ל״א verb
+    { feature: "Qal passive", word: "נָתוּן", description: "passive Qal participle (e.g., given - adj.)" }, // נתן - פ״נ verb
+    { feature: "Qal passive", word: "עָשׂוּי", description: "passive Qal participle (e.g., done/made - adj.)" }, // עשה - ל״ה verb
+    { feature: "Qal passive", word: "דָּבוּר", description: "passive Qal participle (e.g., spoken - adj.)" }, // דברים רבים דבורים
+    { feature: "Qal passive", word: "שָׁלוּחַ", description: "passive Qal participle (e.g., sent - adj.)" },
+    { feature: "Qal passive", word: "פָּקוּד", description: "passive Qal participle (e.g., visited / appointed - adj.)" },
+    { feature: "Qal passive", word: "זָכוּר", description: "passive Qal participle (e.g., remembered - adj.)" },
+    { feature: "Qal passive", word: "שָׁכוּחַ", description: "passive Qal participle (e.g., forgotten - adj.)" },
+    { feature: "Qal passive", word: "עָבוּר", description: "passive Qal participle (e.g., passed over - adj.)" },
+    { feature: "Qal passive", word: "יָרוּד", description: "passive Qal participle (e.g., low / descended - adj.)" }, // ירד - פ״י verb
+    { feature: "Qal passive", word: "אָהוּב", description: "passive Qal participle (e.g., loved - adj.)" }, // אהב - פ״א verb
+    { feature: "Qal passive", word: "קָרוּא", description: "passive Qal participle (e.g., called/read - adj.)" }, // קרא - ל״א verb
+    { feature: "Qal passive", word: "גָּנוּב", description: "passive Qal participle (e.g., stolen - adj.)" }, // גנב
+    { feature: "Qal passive", word: "סָגוּר", description: "passive Qal participle (e.g., closed - adj.)" }, // סגר
+    { feature: "Qal passive", word: "פָּתוּחַ", description: "passive Qal participle (e.g., open - adj.)" }, // פתח
+
+    // niphal interactive (~10+ examples - explicitly reciprocal sense)
+    // Note: Many Niphal forms *can* be reciprocal, but fewer are *primarily* used this way or have distinct forms.
+    // We will use examples where the reciprocal sense is prominent. May not reach 20 distinct *words* solely used reciprocally.
+    { feature: "niphal interactive", word: "נֶאֱבְקוּ", description: "reciprocal sense of Niphal (e.g., they wrestled)" }, // אבק
+    { feature: "niphal interactive", word: "נִפְגְּשׁוּ", description: "reciprocal sense of Niphal (e.g., they met each other)" }, // פגש
+    { feature: "niphal interactive", word: "נִדְבְּרוּ", description: "reciprocal sense of Niphal (e.g., they spoke with each other)" }, // דבר
+    { feature: "niphal interactive", word: "נִלְחֲמוּ", description: "reciprocal sense of Niphal (e.g., they fought each other)" }, // לחם
+    { feature: "niphal interactive", word: "נִשְׁבְּעוּ", description: "reciprocal sense of Niphal (e.g., they swore to each other)" }, // שבע
+    { feature: "niphal interactive", word: "נִסְכְּמוּ", description: "reciprocal sense of Niphal (e.g., they agreed with each other)" }, // סכם
+    { feature: "niphal interactive", word: "נִפְרְדוּ", description: "reciprocal sense of Niphal (e.g., they separated from each other)" }, // פרד
+    { feature: "niphal interactive", word: "נִתְגּוּשׁוּ", description: "reciprocal sense of Niphal (e.g., they clashed)" }, // נתגש
+    { feature: "niphal interactive", word: "נִבְרְכוּ", description: "reciprocal sense of Niphal (e.g., they blessed each other)" }, // ברך
+    { feature: "niphal interactive", word: "נִגְּשׁוּ", description: "reciprocal sense of Niphal (e.g., they approached each other)" }, // נגש
+    { feature: "niphal interactive", word: "נִשְׁבְּרוּ", description: "reciprocal sense of Niphal (e.g., they were broken between them)" }, // שבר
+     // Add more if truly distinct reciprocal examples are needed and found. Using other Niphal examples might be necessary if distinct ones are scarce.
+     // For now, supplementing with more general Niphal if needed for variety in the quiz options.
+     { feature: "niphal interactive", word: "נֶעֶזְרוּ", description: "reciprocal sense of Niphal (e.g., they helped each other)" }, // עזר
+     { feature: "niphal interactive", word: "נִבְדְּלוּ", description: "reciprocal sense of Niphal (e.g., they separated themselves)" }, // בדל
+     { feature: "niphal interactive", word: "נִתְפְּסוּ", description: "reciprocal sense of Niphal (e.g., they grabbed each other)" }, // תפש
+     { feature: "niphal interactive", word: "נִשְׁקְלוּ", description: "reciprocal sense of Niphal (e.g., they considered each other)" }, // שקל
+     { feature: "niphal interactive", word: "נִזְכְּרוּ", description: "reciprocal sense of Niphal (e.g., they remembered each other)" }, // זכר
+     { feature: "niphal interactive", word: "נִתְנַצְּחוּ", description: "reciprocal sense of Niphal (e.g., they debated/argued)" }, // נצח (uncommon Niphal)
+     { feature: "niphal interactive", word: "נִפְצְעוּ", description: "reciprocal sense of Niphal (e.g., they wounded each other)" }, // פצע
+     { feature: "niphal interactive", word: "נִקְטְפוּ", description: "reciprocal sense of Niphal (e.g., they were picked by each other - less common meaning)" }, // קטף (less common)
+     { feature: "niphal interactive", word: "נִשְׁפְּטוּ", description: "reciprocal sense of Niphal (e.g., they judged each other)" }, // שפט
+
+    // Niphal (Reflexive) (~10+ examples - explicitly reflexive sense)
+    // Similar to reciprocal, many Niphal *can* be reflexive. Focus on clear reflexive uses.
+    { feature: "Niphal (Reflexive)", word: "נִשְׁמַר", description: "reflexive sense of Niphal (e.g., he guarded himself)" }, // שמר
+    { feature: "Niphal (Reflexive)", word: "נִכְנַס", description: "reflexive sense of Niphal (e.g., he entered - lit. 'he inserted himself')" }, // כנס
+    { feature: "Niphal (Reflexive)", word: "נֶעֱזָב", description: "reflexive sense of Niphal (e.g., he was left behind / abandoned himself)" }, // עזב (Can be passive too)
+    { feature: "Niphal (Reflexive)", word: "נִזְהָר", description: "reflexive sense of Niphal (e.g., he was careful)" }, // זהר
+    { feature: "Niphal (Reflexive)", word: "נִפְלָא", description: "reflexive sense of Niphal (e.g., it became distinct/wonderful for itself)" }, // פלא (often translated passively 'it was wonderful')
+    { feature: "Niphal (Reflexive)", word: "נִסְתַּר", description: "reflexive sense of Niphal (e.g., he hid himself)" }, // סתר
+    { feature: "Niphal (Reflexive)", word: "נִבְדָּל", description: "reflexive sense of Niphal (e.g., he separated himself)" }, // בדל
+    { feature: "Niphal (Reflexive)", word: "נִקְהָל", description: "reflexive sense of Niphal (e.g., he assembled himself / gathered)" }, // קהל
+    { feature: "Niphal (Reflexive)", word: "נִשְׁבַּר", description: "reflexive sense of Niphal (e.g., he broke himself / was broken)" }, // שבר (Can be passive too)
+    { feature: "Niphal (Reflexive)", word: "נִמְסַר", description: "reflexive sense of Niphal (e.g., he was handed over himself)" }, // מסר (Can be passive too)
+    { feature: "Niphal (Reflexive)", word: "נוֹשָׁע", description: "reflexive sense of Niphal (e.g., he saved himself / was saved)" }, // ישע (often passive)
+    { feature: "Niphal (Reflexive)", word: "נִדְחָף", description: "reflexive sense of Niphal (e.g., he pushed himself / rushed)" }, // דחף
+    { feature: "Niphal (Reflexive)", word: "נִסְמַךְ", description: "reflexive sense of Niphal (e.g., he relied upon himself)" }, // סמך (Can be passive too)
+    { feature: "Niphal (Reflexive)", word: "נִשְׁעַן", description: "reflexive sense of Niphal (e.g., he leaned on himself)" }, // שען
+    { feature: "Niphal (Reflexive)", word: "נִפְלַט", description: "reflexive sense of Niphal (e.g., he escaped)" }, // פלט
+    { feature: "Niphal (Reflexive)", word: "נִשְׁאַר", description: "reflexive sense of Niphal (e.g., he remained for himself)" }, // שאר
+    { feature: "Niphal (Reflexive)", word: "נִצְמַד", description: "reflexive sense of Niphal (e.g., he attached himself)" }, // צמד
+    { feature: "Niphal (Reflexive)", word: "נִגְאַל", description: "reflexive sense of Niphal (e.g., he defiled himself)" }, // גאל
+    { feature: "Niphal (Reflexive)", word: "נִפְתַּח", description: "reflexive sense of Niphal (e.g., he opened himself up - used metaphorically)" }, // פתח
+    { feature: "Niphal (Reflexive)", word: "נִדְחָה", description: "reflexive sense of Niphal (e.g., he pushed himself away)" }, // דחה (ל״ה verb)
+
+    // Interrogative Heh (~20 examples - prefix הָ/הֶ/הֲ indicating a question)
+    { feature: "Interrogative Heh", word: "הֲלֹא", description: "word with Interrogative Heh prefix (e.g., behold / is it not?)" },
+    { feature: "Interrogative Heh", word: "הֲיֵלֵךְ", description: "word with Interrogative Heh prefix (e.g., will he go?)" },
+    { feature: "Interrogative Heh", word: "הַמֶּלֶךְ", description: "word with Interrogative Heh prefix (e.g., is it the king?)" }, // Before definite article
+    { feature: "Interrogative Heh", word: "הֶאָב", description: "word with Interrogative Heh prefix (e.g., is it the father?)" }, // Before א
+    { feature: "Interrogative Heh", word: "הֲשָׁם", description: "word with Interrogative Heh prefix (e.g., is he there?)" },
+    { feature: "Interrogative Heh", word: "הֶחָדָשׁ", description: "word with Interrogative Heh prefix (e.g., is it new?)" }, // Before ח
+    { feature: "Interrogative Heh", word: "הַצֶּדֶק", description: "word with Interrogative Heh prefix (e.g., is it justice?)" }, // Before צ
+    { feature: "Interrogative Heh", word: "הֲתוּכַל", description: "word with Interrogative Heh prefix (e.g., will you be able?)" },
+    { feature: "Interrogative Heh", word: "הֶאֱמַנְתָּ", description: "word with Interrogative Heh prefix (e.g., did you believe?)" },
+    { feature: "Interrogative Heh", word: "הַגָּדוֹל", description: "word with Interrogative Heh prefix (e.g., is it great?)" }, // Before definite article
+    { feature: "Interrogative Heh", word: "הַכֹּל", description: "word with Interrogative Heh prefix (e.g., is it everything?)" },
+    { feature: "Interrogative Heh", word: "הֶרֹאשָׁה", description: "word with Interrogative Heh prefix (e.g., is it the head?)" }, // Before ר
+    { feature: "Interrogative Heh", word: "הֲרָאִיתָ", description: "word with Interrogative Heh prefix (e.g., have you seen?)" },
+    { feature: "Interrogative Heh", word: "הֲשָׁמַעְתָּ", description: "word with Interrogative Heh prefix (e.g., have you heard?)" },
+    { feature: "Interrogative Heh", word: "הֲיֵשׁ", description: "word with Interrogative Heh prefix (e.g., is there?)" },
+    { feature: "Interrogative Heh", word: "הֲאֵלֶּה", description: "word with Interrogative Heh prefix (e.g., are these?)" },
+    { feature: "Interrogative Heh", word: "הֲכִי", description: "word with Interrogative Heh prefix (e.g., is it so?)" },
+    { feature: "Interrogative Heh", word: "הֲלָכְתִּי", description: "word with Interrogative Heh prefix (e.g., did I go?)" },
+    { feature: "Interrogative Heh", word: "הַזֶּה", description: "word with Interrogative Heh prefix (e.g., is it this?)" }, // Before demonstrative pronoun
+    { feature: "Interrogative Heh", word: "הֶעָנִי", description: "word with Interrogative Heh prefix (e.g., is he poor?)" }, // Before ע
+
+    // Infinitive Construct (~20 examples - forms like לִשְׁמֹר)
+    { feature: "Infinitive Construct", word: "לִשְׁמֹר", description: "Infinitive Construct form (e.g., to guard)" },
+    { feature: "Infinitive Construct", word: "לִכְתֹּב", description: "Infinitive Construct form (e.g., to write)" },
+    { feature: "Infinitive Construct", word: "לֶאֱכֹל", description: "Infinitive Construct form (e.g., to eat)" }, // פ״א verb
+    { feature: "Infinitive Construct", word: "לָלֶכֶת", description: "Infinitive Construct form (e.g., to walk)" }, // הלך - irregular
+    { feature: "Infinitive Construct", word: "לָשֶׁבֶת", description: "Infinitive Construct form (e.g., to sit)" }, // ישב - פ״י verb
+    { feature: "Infinitive Construct", word: "לָקוּם", description: "Infinitive Construct form (e.g., to stand up)" }, // קום - ע״ו verb
+    { feature: "Infinitive Construct", word: "לָבֹא", description: "Infinitive Construct form (e.g., to come)" }, // בוא - פ״ו verb, ל״א verb
+    { feature: "Infinitive Construct", word: "לִבְנוֹת", description: "Infinitive Construct form (e.g., to build)" }, // בנה - ל״ה verb
+    { feature: "Infinitive Construct", word: "לִמְצֹא", description: "Infinitive Construct form (e.g., to find)" }, // מצא - ל״א verb
+    { feature: "Infinitive Construct", word: "לָתֵת", description: "Infinitive Construct form (e.g., to give)" }, // נתן - פ״נ verb, irregular
+    { feature: "Infinitive Construct", word: "לִקְרֹא", description: "Infinitive Construct form (e.g., to call/read)" },
+    { feature: "Infinitive Construct", word: "לַעֲשׂוֹת", description: "Infinitive Construct form (e.g., to do/make)" }, // עשה - ל״ה verb
+    { feature: "Infinitive Construct", word: "לְדַבֵּר", description: "Infinitive Construct form (Piel) (e.g., to speak)" }, // Example in another binyan
+    { feature: "Infinitive Construct", word: "לְבַקֵּשׁ", description: "Infinitive Construct form (Piel) (e.g., to seek)" }, // Example in another binyan
+    { feature: "Infinitive Construct", word: "לְהַכְתִּיב", description: "Infinitive Construct form (Hiphil) (e.g., to dictate)" }, // Example in another binyan
+    { feature: "Infinitive Construct", word: "לְהוֹשִׁיב", description: "Infinitive Construct form (Hiphil) (e.g., to seat)" }, // Example in another binyan
+    { feature: "Infinitive Construct", word: "לְהִשְׁתַּמֵּר", description: "Infinitive Construct form (hispael) (e.g., to guard oneself)" }, // Example in another binyan
+    { feature: "Infinitive Construct", word: "לְהִתְפַּלֵּל", description: "Infinitive Construct form (hispael) (e.g., to pray)" }, // Example in another binyan
+    { feature: "Infinitive Construct", word: "לְהֵאָכֵל", description: "Infinitive Construct form (Niphal) (e.g., to be eaten)" }, // Example in another binyan
+    { feature: "Infinitive Construct", word: "לִגְנוֹב", description: "Infinitive Construct form (Qal) (e.g., to steal)" }, // גנב
+
+    // Preformative Mem (~20 examples - nouns/participles starting with מ)
+    { feature: "Preformative Mem", word: "מִשְׁמֶרֶת", description: "noun or participle with a Preformative Mem (e.g., guard, duty)" },
+    { feature: "Preformative Mem", word: "מֶלֶךְ", description: "noun or participle with a Preformative Mem (e.g., king) - *caution: not always a preformative mem, but common structure*" }, // Common noun
+    { feature: "Preformative Mem", word: "מִדְבָּר", description: "noun or participle with a Preformative Mem (e.g., wilderness)" }, // From דבר
+    { feature: "Preformative Mem", word: "מִצְוָה", description: "noun or participle with a Preformative Mem (e.g., commandment)" }, // From צוה
+    { feature: "Preformative Mem", word: "מַלְכוּת", description: "noun or participle with a Preformative Mem (e.g., kingdom)" }, // From מלך
+    { feature: "Preformative Mem", word: "מִשְׁפָּט", description: "noun or participle with a Preformative Mem (e.g., judgment, law)" }, // From שפט
+    { feature: "Preformative Mem", word: "מַעֲשֶׂה", description: "noun or participle with a Preformative Mem (e.g., deed, work)" }, // From עשה
+    { feature: "Preformative Mem", word: "מָקוֹם", description: "noun or participle with a Preformative Mem (e.g., place)" }, // From קום
+    { feature: "Preformative Mem", word: "מוֹעֵד", description: "noun or participle with a Preformative Mem (e.g., appointed time/place)" }, // From יעד
+    { feature: "Preformative Mem", word: "מַיִם", description: "noun or participle with a Preformative Mem (e.g., water)" }, // Common noun
+    { feature: "Preformative Mem", word: "מִצְרַיִם", description: "noun or participle with a Preformative Mem (e.g., Egypt)" }, // Place name
+    { feature: "Preformative Mem", word: "מַרְאֶה", description: "noun or participle with a Preformative Mem (e.g., sight, appearance)" }, // From ראה
+    { feature: "Preformative Mem", word: "מִלְחָמָה", description: "noun or participle with a Preformative Mem (e.g., war)" }, // From לחם
+    { feature: "Preformative Mem", word: "מַאֲכָל", description: "noun or participle with a Preformative Mem (e.g., food)" }, // From אכל
+    { feature: "Preformative Mem", word: "מַעְבָּר", description: "noun or participle with a Preformative Mem (e.g., crossing)" }, // From עבר
+    { feature: "Preformative Mem", word: "מַתָּנָה", description: "noun or participle with a Preformative Mem (e.g., gift)" }, // From נתן
+    { feature: "Preformative Mem", word: "מַסָּע", description: "noun or participle with a Preformative Mem (e.g., journey)" }, // From נסע
+    { feature: "Preformative Mem", word: "מוֹשָׁב", description: "noun or participle with a Preformative Mem (e.g., dwelling)" }, // From ישב
+    { feature: "Preformative Mem", word: "מִקְרָא", description: "noun or participle with a Preformative Mem (e.g., scripture, reading)" }, // From קרא
+    { feature: "Preformative Mem", word: "מְשָׁרֵת", description: "noun or participle with a Preformative Mem (Piel participle acting as noun) (e.g., minister, servant)" }, // From שרת
+
+    // Construct form (~20 examples - first noun in a genitive construction)
+    { feature: "Construct form", word: "בֵּית", description: "word in the Construct form (e.g., house of)" },
+    { feature: "Construct form", word: "דְּבַר", description: "word in the Construct form (e.g., word of)" },
+    { feature: "Construct form", word: "מֶלֶךְ", description: "word in the Construct form (e.g., king of)" }, // Looks like absolute state, but contextually construct
+    { feature: "Construct form", word: "אַרְצִי", description: "word in the Construct form (e.g., land of - with suffix)" }, // With pronoun suffix
+    { feature: "Construct form", word: "עֶבֶד", description: "word in the Construct form (e.g., servant of)" },
+    { feature: "Construct form", word: "בַּת", description: "word in the Construct form (e.g., daughter of)" }, // Feminine noun, singular
+    { feature: "Construct form", word: "בָּתֵּי", description: "word in the Construct form (e.g., houses of)" }, // Masculine noun, plural
+    { feature: "Construct form", word: "מַלְכֵי", description: "word in the Construct form (e.g., kings of)" }, // Masculine noun, plural
+    { feature: "Construct form", word: "מִצְוַת", description: "word in the Construct form (e.g., commandment of)" }, // Feminine noun, singular
+    { feature: "Construct form", word: "נְשֵׁי", description: "word in the Construct form (e.g., women of)" }, // Feminine noun, plural
+    { feature: "Construct form", word: "בְּנֵי", description: "word in the Construct form (e.g., sons of)" }, // Masculine noun, plural
+    { feature: "Construct form", word: "יוֹם", description: "word in the Construct form (e.g., day of)" }, // Looks like absolute, but common in construct phrases
+    { feature: "Construct form", word: "שֵׁם", description: "word in the Construct form (e.g., name of)" },
+    { feature: "Construct form", word: "פְּנֵי", description: "word in the Construct form (e.g., face of - plural)" }, // Plural noun often construct
+    { feature: "Construct form", word: "קוֹל", description: "word in the Construct form (e.g., voice of)" },
+    { feature: "Construct form", word: "יַד", description: "word in the Construct form (e.g., hand of)" }, // Feminine noun, singular
+    { feature: "Construct form", word: "אִישׁ", description: "word in the Construct form (e.g., man of)" },
+    { feature: "Construct form", word: "אֵשׁ", description: "word in the Construct form (e.g., fire of)" }, // Feminine noun
+    { feature: "Construct form", word: "אֹהֶל", description: "word in the Construct form (e.g., tent of)" },
+    { feature: "Construct form", word: "עֵץ", description: "word in the Construct form (e.g., tree of)" },
+
+    // Infinitive Absolute (~10+ examples - often for emphasis, looks like passive participle or related)
+    // Less frequent than Infinitive Construct. Finding 20 distinct common examples is difficult.
+    { feature: "Infinitive Absolute", word: "שָׁמוֹר", description: "Infinitive Absolute form (e.g., diligently guarding)" }, // Qal, from שמר
+    { feature: "Infinitive Absolute", word: "כָּתוֹב", description: "Infinitive Absolute form (e.g., certainly writing)" }, // Qal, from כתב
+    { feature: "Infinitive Absolute", word: "אָכוֹל", description: "Infinitive Absolute form (e.g., surely eating)" }, // Qal, from אכל
+    { feature: "Infinitive Absolute", word: "בָּנֹה", description: "Infinitive Absolute form (e.g., surely building)" }, // Qal, from בנה (ל״ה verb)
+    { feature: "Infinitive Absolute", word: "יָשׁוֹב", description: "Infinitive Absolute form (e.g., surely sitting)" }, // Qal, from ישב (פ״י verb)
+    { feature: "Infinitive Absolute", word: "נָתוֹן", description: "Infinitive Absolute form (e.g., surely giving)" }, // Qal, from נתן (פ״נ verb)
+    { feature: "Infinitive Absolute", word: "הַשְׁמֵד", description: "Infinitive Absolute form (Hiphil) (e.g., utterly destroying)" }, // Hiphil, from שמד
+    { feature: "Infinitive Absolute", word: "דַּבֵּר", description: "Infinitive Absolute form (Piel) (e.g., diligently speaking)" }, // Piel, from דבר
+    { feature: "Infinitive Absolute", word: "קַדֵּשׁ", description: "Infinitive Absolute form (Piel) (e.g., diligently sanctifying)" }, // Piel, from קדש
+    { feature: "Infinitive Absolute", word: "נִשְׁמֹר", description: "Infinitive Absolute form (Niphal) (e.g., surely being guarded)" }, // Niphal, from שמר
+    { feature: "Infinitive Absolute", word: "הִתְקַדֵּשׁ", description: "Infinitive Absolute form (hispael) (e.g., diligently sanctifying oneself)" }, // hispael, from קדש
+     // Supplement with more if truly distinct IA forms across binyanim are known and desired.
+     { feature: "Infinitive Absolute", word: "לָקוֹחַ", description: "Infinitive Absolute form (Qal) (e.g., surely taking)" }, // לקח
+     { feature: "Infinitive Absolute", word: "פָּקֹד", description: "Infinitive Absolute form (Qal) (e.g., surely visiting)" }, // פקד
+     { feature: "Infinitive Absolute", word: "שָׁלֹחַ", description: "Infinitive Absolute form (Qal) (e.g., surely sending)" }, // שלח
+     { feature: "Infinitive Absolute", word: "קָרֹא", description: "Infinitive Absolute form (Qal) (e.g., surely calling/reading)" }, // קרא (ל״א verb)
+     { feature: "Infinitive Absolute", word: "עָשׂוֹת", description: "Infinitive Absolute form (Qal) (e.g., surely doing)" }, // עשה (ל״ה verb) - looks like construct
+     { feature: "Infinitive Absolute", word: "גָּנוֹב", description: "Infinitive Absolute form (Qal) (e.g., surely stealing)" }, // גנב
+     { feature: "Infinitive Absolute", word: "סָגוֹר", description: "Infinitive Absolute form (Qal) (e.g., surely closing)" }, // סגר
+     { feature: "Infinitive Absolute", word: "הַגֵּד", description: "Infinitive Absolute form (Hiphil) (e.g., utterly telling)" }, // נגד
+     { feature: "Infinitive Absolute", word: "הָבֵא", description: "Infinitive Absolute form (Hiphil) (e.g., utterly bringing)" }, // בוא
+
+    // Jussive/Cohortative (~15+ examples - forms expressing command/wish, often short forms)
+    // Cohortative is 1cs, Jussive is others. Grouping for simplicity unless distinction is required.
+    { feature: "Jussive/Cohortative", word: "נֵלְכָה", description: "Jussive or Cohortative form (e.g., let us go - Cohortative 1cs)" }, // הלך
+    { feature: "Jussive/Cohortative", word: "יֵלֶךְ", description: "Jussive or Cohortative form (e.g., let him go - Jussive 3ms)" }, // הלך
+    { feature: "Jussive/Cohortative", word: "יָקֹם", description: "Jussive or Cohortative form (e.g., let him stand up - Jussive 3ms)" }, // קום (ע״ו verb)
+    { feature: "Jussive/Cohortative", word: "יָבֹא", description: "Jussive or Cohortative form (e.g., let him come - Jussive 3ms)" }, // בוא (פ״ו ל״א verb)
+    { feature: "Jussive/Cohortative", word: "אַל־תִּשְׁמֹר", description: "Jussive or Cohortative form (e.g., do not guard - Negative Jussive 2ms)" }, // שמר
+    { feature: "Jussive/Cohortative", word: "יְהִי", description: "Jussive or Cohortative form (e.g., let there be - Jussive 3ms of היה)" }, // היה (ל״ה verb)
+    { feature: "Jussive/Cohortative", word: "אַל־תִּבְנֶה", description: "Jussive or Cohortative form (e.g., do not build - Negative Jussive 2ms)" }, // בנה (ל״ה verb)
+    { feature: "Jussive/Cohortative", word: "תַּעֲשׂוּ", description: "Jussive or Cohortative form (e.g., that you may do - Jussive 2mp)" }, // עשה (ל״ה verb)
+    { feature: "Jussive/Cohortative", word: "נַעֲשֶׂה", description: "Jussive or Cohortative form (e.g., let us do - Cohortative 1cp)" }, // עשה (ל״ה verb)
+    { feature: "Jussive/Cohortative", word: "יַגִּיד", description: "Jussive or Cohortative form (Hiphil) (e.g., let him tell - Jussive 3ms)" }, // נגד (פ״נ verb, Hiphil)
+    { feature: "Jussive/Cohortative", word: "אַל־תַּכְתִּיב", description: "Jussive or Cohortative form (Hiphil) (e.g., do not dictate - Negative Jussive 2ms)" }, // כתב (Hiphil)
+    { feature: "Jussive/Cohortative", word: "אַל־תְּדַבֵּר", description: "Jussive or Cohortative form (Piel) (e.g., do not speak - Negative Jussive 2ms)" }, // דבר (Piel)
+    { feature: "Jussive/Cohortative", word: "יְדַבֵּר", description: "Jussive or Cohortative form (Piel) (e.g., let him speak - Jussive 3ms)" }, // דבר (Piel)
+    { feature: "Jussive/Cohortative", word: "אַל־תִּתְפַּלֵּל", description: "Jussive or Cohortative form (hispael) (e.g., do not pray - Negative Jussive 2ms)" }, // פלל (hispael)
+    { feature: "Jussive/Cohortative", word: "תִּתְפַּלֵּל", description: "Jussive or Cohortative form (hispael) (e.g., that you may pray - Jussive 2ms)" }, // פלל (hispael)
+    { feature: "Jussive/Cohortative", word: "יִשָּׁמֵר", description: "Jussive or Cohortative form (Niphal) (e.g., let him be guarded - Jussive 3ms)" }, // שמר (Niphal)
+    { feature: "Jussive/Cohortative", word: "נִשָּׁמֵר", description: "Jussive or Cohortative form (Niphal) (e.g., let us be careful - Cohortative 1cp)" }, // שמר (Niphal)
+    { feature: "Jussive/Cohortative", word: "יִקָּטֵל", description: "Jussive or Cohortative form (Niphal) (e.g., let him be killed - Jussive 3ms)" }, // קטל (Niphal)
+    { feature: "Jussive/Cohortative", word: "תָּקֹם", description: "Jussive or Cohortative form (e.g., may you rise up - Jussive 2fs)" }, // קום (ע״ו verb)
+    { feature: "Jussive/Cohortative", word: "תֵּשֶׁב", description: "Jussive or Cohortative form (e.g., may you sit - Jussive 2ms)" }, // ישב (פ״י verb)
+
+
+    // Paragogic Nun (~5+ examples - Less frequent suffix on certain forms, especially Jussive/Imperative)
+    // Finding 20 distinct common examples is very difficult. Focus on common occurrences.
+    { feature: "Paragogic Nun", word: "יֵלֵכוּן", description: "word with a Paragogic Nun suffix (e.g., they will go - lengthened form)" }, // ילך
+    { feature: "Paragogic Nun", word: "תֵּדְעוּן", description: "word with a Paragogic Nun suffix (e.g., you will know - lengthened form)" }, // ידע
+    { feature: "Paragogic Nun", word: "יֹאמְרוּן", description: "word with a Paragogic Nun suffix (e.g., they will say - lengthened form)" }, // אמר
+    { feature: "Paragogic Nun", word: "תִּשְׁמְרוּן", description: "word with a Paragogic Nun suffix (e.g., you will guard - lengthened form)" }, // שמר
+    { feature: "Paragogic Nun", word: "תַּעֲשׂוּן", description: "word with a Paragogic Nun suffix (e.g., you will do - lengthened form)" }, // עשה
+    { feature: "Paragogic Nun", word: "שִׁמְרוּן", description: "word with a Paragogic Nun suffix (e.g., Guard! - Imperative plural with PN)" }, // שמר (Imperative)
+    { feature: "Paragogic Nun", word: "לֶכְתּוּן", description: "word with a Paragogic Nun suffix (e.g., Go! - Imperative plural with PN)" }, // הלך (Imperative)
+    { feature: "Paragogic Nun", word: "קַחֲוּן", description: "word with a Paragogic Nun suffix (e.g., Take! - Imperative plural with PN)" }, // לקח (Imperative)
+    { feature: "Paragogic Nun", word: "בּוֹאוּן", description: "word with a Paragogic Nun suffix (e.g., Come! - Imperative plural with PN)" }, // בוא (Imperative)
+    { feature: "Paragogic Nun", word: "יָשֻׁבוּן", description: "word with a Paragogic Nun suffix (e.g., they will return - lengthened form)" }, // שוב
+     // Limited clear, common examples for this category. Listing 10+ examples where the form is clearly a Paragogic Nun.
+     { feature: "Paragogic Nun", word: "תִּהְיוּן", description: "word with a Paragogic Nun suffix (e.g., you will be - lengthened form)" }, // היה
+     { feature: "Paragogic Nun", word: "תִּרְאוּן", description: "word with a Paragogic Nun suffix (e.g., you will see - lengthened form)" }, // ראה
+     { feature: "Paragogic Nun", word: "יִרְאוּן", description: "word with a Paragogic Nun suffix (e.g., they will see - lengthened form)" }, // ראה
+     { feature: "Paragogic Nun", word: "תִּשְׁלְחוּן", description: "word with a Paragogic Nun suffix (e.g., you will send - lengthened form)" }, // שלח
+     { feature: "Paragogic Nun", word: "יַעֲשׂוּן", description: "word with a Paragogic Nun suffix (e.g., they will do - lengthened form)" }, // עשה
+     { feature: "Paragogic Nun", word: "תֵּלְכוּן", description: "word with a Paragogic Nun suffix (e.g., you will go - lengthened form)" }, // הלך
+     { feature: "Paragogic Nun", word: "בַּקְּשׁוּן", description: "word with a Paragogic Nun suffix (Piel) (e.g., Seek! - Imperative plural with PN)" }, // בקש (Piel Imperative)
+     { feature: "Paragogic Nun", word: "צַוּוּן", description: "word with a Paragogic Nun suffix (Piel) (e.g., Command! - Imperative plural with PN)" }, // צוה (Piel Imperative)
+     { feature: "Paragogic Nun", word: "הַגִּידוּן", description: "word with a Paragogic Nun suffix (Hiphil) (e.g., Tell! - Imperative plural with PN)" }, // נגד (Hiphil Imperative)
+     { feature: "Paragogic Nun", word: "הִשְׁתַּחֲווּן", description: "word with a Paragogic Nun suffix (hispael) (e.g., Bow down! - Imperative plural with PN)" }, // השתחוה (hispael Imperative)
+
+];
+
+        let currentCorrectAnswer = null;
+        let currentCorrectItemIndex = null; // Index in the quizData array for the correct item
+        let isAnswerSelected = false; // Flag to prevent multiple answer selections
+
+        const questionEl = document.getElementById('question');
+        const optionsGridEl = document.getElementById('options-grid');
+        const feedbackEl = document.getElementById('feedback');
+        const nextButton = document.getElementById('next-button');
+        const optionBoxes = optionsGridEl.querySelectorAll('.option-box');
+        const keyboardHintEl = document.getElementById('keyboard-hint');
+
+        // Helper to shuffle an array
+        function shuffleArray(array) {
+            const shuffled = [...array]; // Create a copy to avoid modifying the original array
+            for (let i = shuffled.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+            }
+            return shuffled;
+        }
+
+        // Helper to get random distinct items from an array
+        function getRandomDistinctItems(arr, num, excludeItem = null) {
+             // Filter out the excluded item based on a unique property (e.g., word or feature)
+            const available = arr.filter(item => item !== excludeItem);
+
+            if (available.length < num) {
+                 console.error("Not enough unique items available for options!");
+                 return available; // Return fewer items if not enough available
+            }
+
+            const result = [];
+            const availableCopy = shuffleArray(available); // Shuffle available items to pick randomly
+
+            while (result.length < num) {
+                result.push(availableCopy.pop());
+            }
+            return result;
+        }
+
+
+        function displayQuestion() {
+            feedbackEl.textContent = '';
+            feedbackEl.className = ''; // Clear feedback classes
+            isAnswerSelected = false; // Reset flag
+            keyboardHintEl.textContent = 'Use keys 1-4 to select an answer.';
+
+            // Reset options
+            optionBoxes.forEach((box, index) => {
+                box.innerHTML = `<span class="number-indicator">${index + 1}.</span>`; // Reset text and add number
+                box.className = 'option-box'; // Reset classes
+                box.classList.remove('disabled');
+                box.onclick = null; // Remove previous click handlers
+                box.style.visibility = 'visible'; // Ensure visibility
+            });
+            nextButton.disabled = true;
+
+            if (quizData.length < 4) {
+                questionEl.textContent = "Not enough data to run the quiz (need at least 4 items).";
+                optionBoxes.forEach(box => box.style.visibility = 'hidden');
+                nextButton.style.display = 'none';
+                keyboardHintEl.style.display = 'none';
+                return;
+            }
+
+            // Select a random item from the quizData array to be the correct answer source
+            currentCorrectItemIndex = Math.floor(Math.random() * quizData.length);
+            const correctItem = quizData[currentCorrectItemIndex];
+            const correctFeatureKey = correctItem.feature;
+            const correctWord = correctItem.word;
+            const correctDescription = correctItem.description;
+
+            // Randomly choose question type (1 or 2)
+            const questionType = Math.random() < 0.5 ? 1 : 2; // 50/50 chance
+
+            let options = [];
+            let questionText = '';
+
+
+            if (questionType === 1) {
+                // Type 1: What is the feature of the word...?
+                questionText = `What is the grammatical feature of the word "${correctWord}"?`;
+                currentCorrectAnswer = correctFeatureKey; // The feature name is the correct answer
+
+                // Options are feature names
+                const incorrectItems = getRandomDistinctItems(quizData, 3, correctItem);
+                const incorrectFeatureKeys = incorrectItems.map(item => item.feature);
+                options = [currentCorrectAnswer, ...incorrectFeatureKeys];
+
+            } else {
+                // Type 2: Find a word that represents the feature...
+                questionText = `Find a word that represents the grammatical feature: "${correctFeatureKey}" (${correctDescription}).`;
+                currentCorrectAnswer = correctWord; // The word is the correct answer
+
+                // Options are words
+                const incorrectItems = getRandomDistinctItems(quizData, 3, correctItem);
+                const incorrectWords = incorrectItems.map(item => item.word);
+                options = [currentCorrectAnswer, ...incorrectWords];
+            }
+
+            // Shuffle options
+            options = shuffleArray(options);
+
+            // Display options and set click handlers
+            optionBoxes.forEach((box, index) => {
+                if (options[index]) {
+                     // Keep the number indicator, append the option text
+                    box.innerHTML = `<span class="number-indicator">${index + 1}.</span> ${options[index]}`;
+                    box.onclick = () => handleAnswer(box, options[index]);
+                    box.setAttribute('data-option-value', options[index]); // Store value for keyboard handling
+                } else {
+                     box.style.visibility = 'hidden'; // Hide if fewer than 4 options somehow
+                }
+            });
+
+            // Display the question
+            questionEl.textContent = questionText;
+        }
+
+        function handleAnswer(selectedBox, selectedAnswerText) {
+            if (isAnswerSelected) {
+                return; // Prevent double clicking/answering
+            }
+            isAnswerSelected = true; // Set flag
+
+            // Disable all options after an answer is selected
+            optionBoxes.forEach(box => {
+                 box.classList.add('disabled');
+                 box.onclick = null; // Remove click listener
+            });
+
+            if (selectedAnswerText === currentCorrectAnswer) {
+                feedbackEl.textContent = 'Correct!';
+                feedbackEl.className = 'feedback-correct';
+                selectedBox.classList.add('correct');
+            } else {
+                feedbackEl.textContent = `Incorrect. The correct answer was "${currentCorrectAnswer}".`;
+                feedbackEl.className = 'feedback-incorrect';
+                selectedBox.classList.add('incorrect');
+
+                // Find and highlight the correct answer
+                optionBoxes.forEach(box => {
+                    if (box.getAttribute('data-option-value') === currentCorrectAnswer) {
+                        box.classList.add('correct');
+                    }
+                });
+            }
+
+            nextButton.disabled = false;
+            keyboardHintEl.textContent = 'Press Enter for the next question.';
+        }
+
+        function nextQuestion() {
+            if (!nextButton.disabled) { // Only proceed if the button is active
+                displayQuestion();
+            }
+        }
+
+        // --- Keyboard Navigation ---
+
+        document.addEventListener('keydown', (event) => {
+            // If an answer hasn't been selected yet
+            if (!isAnswerSelected) {
+                const key = event.key;
+                if (key >= '1' && key <= '4') {
+                    const optionIndex = parseInt(key, 10) - 1;
+                    if (optionBoxes[optionIndex] && !optionBoxes[optionIndex].classList.contains('disabled')) {
+                        // Simulate a click on the corresponding option box
+                        optionBoxes[optionIndex].click();
+                    }
+                }
+            } else {
+                 // If an answer HAS been selected (and Next button is enabled)
+                 if (event.key === 'Enter' && !nextButton.disabled) {
+                     nextQuestion();
+                 }
+            }
+        });
+
+
+        // --- Initial Setup and Event Listeners ---
+
+        // Event listener for the next button (for mouse clicks)
+        nextButton.addEventListener('click', nextQuestion);
+
+        // Initial question display when the page loads
+        document.addEventListener('DOMContentLoaded', displayQuestion);
+
+    </script>
+
+</body>
+</html>
